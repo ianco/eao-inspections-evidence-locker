@@ -372,8 +372,8 @@ configureEnvironment() {
   export APPLICATION_URL=${APPLICATION_URL-http://localhost:8080}
 
   # tob-web
-  export TOB_THEME=${TOB_THEME:-default}
-  export TOB_THEME_PATH=${TOB_THEME_PATH-}
+  export TOB_THEME=${TOB_THEME:-bcgov}
+  export TOB_THEME_PATH=${TOB_THEME_PATH:-'../client/tob-web/themes'}
   export WEB_HTTP_PORT=${WEB_HTTP_PORT:-8080}
   export WEB_BASE_HREF=${WEB_BASE_HREF:-/}
   export WEB_DEPLOY_URL=${WEB_DEPLOY_URL:-/}
