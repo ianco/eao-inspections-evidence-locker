@@ -109,14 +109,14 @@ build-web() {
   echo -e "\nBuilding nginx-runtime image ..."
   docker build -q \
     -t 'nginx-runtime' \
-    -f '../../../credential-registry/client/tob-web/openshift/templates/nginx-runtime/Dockerfile' '../../../credential-registry/client/tob-web/openshift/templates/nginx-runtime/'
+    -f '../../../credential-registry/client/tob-web/docker/nginx-runtime/Dockerfile' '../../../credential-registry/client/tob-web/docker/nginx-runtime/'
 
   # This image only exists to pre-create the npm cache directory
   # so it can be properly used as a volume, it doesn't apply to openshift
   echo -e "\nBuilding nodejs-build image ..."
   docker build -q \
     -t 'nodejs-build' \
-    -f '../../../credential-registry/client/tob-web/openshift/templates/nodejs-build/Dockerfile' '../../../credential-registry/client/tob-web/openshift/templates/nodejs-build/'
+    -f '../../../credential-registry/client/tob-web/docker/nodejs-build/Dockerfile' '../../../credential-registry/client/tob-web/docker/nodejs-build/'
 
   if [ -t 0 ]; then
     # color npm output in interactive terminal
@@ -172,7 +172,7 @@ build-web-dev() {
   echo -e "\nBuilding nodejs-build image ..."
   docker build -q \
     -t 'nodejs-build' \
-    -f '../client/tob-web/openshift/templates/nodejs-build/Dockerfile' '../client/tob-web/openshift/templates/nodejs-build/'
+    -f '../client/tob-web/docker/nodejs-build/Dockerfile' '../client/tob-web/docker/nodejs-build/'
 
   # NB: We build with DEV_MODE=true but run with DEV_MODE=false
   echo -e "\nBuilding angular-dev image ..."
