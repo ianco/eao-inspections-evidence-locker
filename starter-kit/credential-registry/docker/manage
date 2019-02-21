@@ -373,7 +373,8 @@ configureEnvironment() {
 
   # tob-web
   export TOB_THEME=${TOB_THEME:-bcgov}
-  export TOB_THEME_PATH=${TOB_THEME_PATH:-'../client/tob-web/themes'}
+  WORKING_DIR=`pwd`
+  export TOB_THEME_PATH=${TOB_THEME_PATH:-$WORKING_DIR/../client/tob-web/themes}
   export WEB_HTTP_PORT=${WEB_HTTP_PORT:-8080}
   export WEB_BASE_HREF=${WEB_BASE_HREF:-/}
   export WEB_DEPLOY_URL=${WEB_DEPLOY_URL:-/}
