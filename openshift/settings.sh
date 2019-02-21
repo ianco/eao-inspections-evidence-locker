@@ -9,7 +9,7 @@ export GIT_URI="https://github.com/bcgov/eao-evidence-locker.git"
 export GIT_REF="master"
 
 # The project components
-export components="tob-db tob-solr tob-api tob-web tob-wallet tob-backup"
+export components="tob-db tob-solr tob-api tob-web tob-wallet"
 
 # The builds to be triggered after buildconfigs created (not auto-triggered)
 export builds=""
