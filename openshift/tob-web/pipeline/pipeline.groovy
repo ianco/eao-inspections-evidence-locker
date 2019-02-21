@@ -147,7 +147,7 @@ def CHAINED_BUILD_CONFIG = 'angular-on-nginx-build'
 def DEPLOYMENT_CONFIG_NAME = 'angular-on-nginx'
 
 // The namespace of you dev deployment environment.
-def DEV_NAME_SPACE = 'devex-von-dev'
+def DEV_NAME_SPACE = 'esm-dev'
 
 @NonCPS
 boolean triggerBuild(String contextDirectory) {

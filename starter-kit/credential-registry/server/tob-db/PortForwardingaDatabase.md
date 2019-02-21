@@ -13,8 +13,8 @@ To accomplish this, we will use OpenShift port forwarding.  Some additional deta
 - Login to the OpenShift server.
 - Switch to the project containing the database pod.
   ```
-  $ oc project devex-von-dev
-  Now using project "devex-von-dev" on server "https://console.pathfinder.gov.bc.ca:8443".
+  $ oc project esm-dev
+  Now using project "esm-dev" on server "https://console.pathfinder.gov.bc.ca:8443".
   ```
 - List the pods
   ```
