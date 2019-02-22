@@ -539,7 +539,7 @@
       "displayName": "Database Name",
       "required": true,
       "description": "Name of the deployed database (see environment variables in deployed database).",
-      "value": "TheOrgBook_Database"
+      "value": "Evidence_Locker_Database"
     },
     {
       "name": "WALLET_TYPE",
@@ -711,7 +711,7 @@
     },
     {
       "name": "TOB_THEME",
-      "displayName": "TheOrgBook Theme",
+      "displayName": "Evidence Locker Theme",
       "description": "The theme to use for the tob-api.  This defines which customizations to load for the application.",
       "required": true,
       "value": "bcgov"
@@ -758,9 +758,9 @@
     {
       "name": "APPLICATION_URL",
       "displayName": "Application url",
-      "description": "This service's url.",
-      "required": true,
-      "value": "https://orgbook.gov.bc.ca"
+      "description": "This service's url. If not specified, a value will be generated.",
+      "required": false,
+      "value": ""
     },
     {
       "name": "EMAIL_SETTINGS_STORE_NAME",

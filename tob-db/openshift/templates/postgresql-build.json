@@ -71,7 +71,7 @@
             "displayName": "Git Repo URL",
             "description": "The URL to your GIT repo.",
             "required": true,
-            "value": "https://github.com/bcgov/TheOrgBook.git"
+            "value": "https://github.com/bcgov/eao-inspections-evidence-locker.git"
         },
         {
             "name": "GIT_REF",
