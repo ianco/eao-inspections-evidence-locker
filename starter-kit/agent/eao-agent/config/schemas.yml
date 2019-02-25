@@ -1,19 +1,116 @@
 # Documentation: https://github.com/bcgov/von-agent-template/tree/master/von-x-agent/config
 
-- name: safety-inspection.eao-evidence-locker
+- name: inspection-site.eao-evidence-locker
+  version: '1.0.0'
+  description: The core site credential issued by EAO Evidence Locker
+  endpoint: $ENDPOINT_URL
+  path: /eao-evidence-locker/inspection-site
+  # identify the attribute which identify the owning organization
+  topic: project_name
+  attributes:
+    project_name:
+      description: Project name issued by the registering organization
+      # one of: ui_name, ui_address, ui_text, ui_date, ui_select, helper_uuid, helper_now_iso, helper_value
+      data_type: ui_text
+      required: true
+    location:
+      description: Location issued by the registering organization
+      # one of: ui_name, ui_address, ui_text, ui_date, ui_select, helper_uuid, helper_now_iso, helper_value
+      data_type: ui_text
+      required: true
 
+- name: safety-inspection.eao-evidence-locker
   version: '1.0.0'
   description: The safety-inspection credential issued by EAO Evidence Locker
+  endpoint: $ENDPOINT_URL
   path: /eao-evidence-locker/safety-inspection
-
+  # identify the attribute which identify the owning organization
+  topic: project_name
+  # optionally identify additional attributes to uniquely identify a credential
+  cardinality: inspection_id
+  # optionally identify a dependant proof request
+  proof_request: registration
   attributes:
-    - corp_num
-    - legal_name
-    - permit_id
-    - permit_type
-    - permit_issued_date
-    - permit_status
-    - effective_date
+    project_name:
+      description: Project name issued by the registering organization
+      # one of: ui_name, ui_address, ui_text, ui_date, ui_select, helper_uuid, helper_now_iso, helper_value
+      data_type: ui_text
+      required: true
+    inspection_id:
+      description: ID issued by the registering organization
+      # one of: ui_name, ui_address, ui_text, ui_date, ui_select, helper_uuid, helper_now_iso, helper_value
+      data_type: ui_text
+      required: true
+    team_id:
+      description: ID of the inspecting team
+      # one of: ui_name, ui_address, ui_text, ui_date, ui_select, helper_uuid, helper_now_iso, helper_value
+      data_type: ui_text
+      required: true
+    created_date:
+      description: Date inspection was created
+      # one of: ui_name, ui_address, ui_text, ui_date, ui_select, helper_uuid, helper_now_iso, helper_value
+      data_type: ui_date
+      required: true
+    updated_date:
+      description: Date inspection was last updated
+      # one of: ui_name, ui_address, ui_text, ui_date, ui_select, helper_uuid, helper_now_iso, helper_value
+      data_type: ui_date
+      required: true
+    hash_value:
+      description: Hash value of inspection report as uploaded
+      # one of: ui_name, ui_address, ui_text, ui_date, ui_select, helper_uuid, helper_now_iso, helper_value
+      data_type: ui_text
+      required: true
+
+- name: inspection-document.eao-evidence-locker
+  version: '1.0.0'
+  description: A document credential attached to an inspection issued by EAO Evidence Locker
+  endpoint: $ENDPOINT_URL
+  path: /eao-evidence-locker/inspection-document
+  # identify the attribute which identify the owning organization
+  topic: project_name
+  # optionally identify additional attributes to uniquely identify a credential
+  cardinality: 
+    - inspection_id
+    - document_id
+    # optionally identify a dependant proof request
+  proof_request: inspection
+  attributes:
+    project_name:
+      description: Project name issued by the registering organization
+      # one of: ui_name, ui_address, ui_text, ui_date, ui_select, helper_uuid, helper_now_iso, helper_value
+      data_type: ui_text
+      required: true
+    inspection_id:
+      description: ID issued by the registering organization
+      # one of: ui_name, ui_address, ui_text, ui_date, ui_select, helper_uuid, helper_now_iso, helper_value
+      data_type: ui_text
+      required: true
+    document_id:
+      description: Document ID issued by the registering organization
+      # one of: ui_name, ui_address, ui_text, ui_date, ui_select, helper_uuid, helper_now_iso, helper_value
+      data_type: ui_text
+      required: true
+    document_type:
+      description: Document Type issued by the registering organization
+      # one of: ui_name, ui_address, ui_text, ui_date, ui_select, helper_uuid, helper_now_iso, helper_value
+      data_type: ui_select
+      required: true
+    created_date:
+      description: Date document was created
+      # one of: ui_name, ui_address, ui_text, ui_date, ui_select, helper_uuid, helper_now_iso, helper_value
+      data_type: ui_date
+      required: true
+    updated_date:
+      description: Date document was last updated
+      # one of: ui_name, ui_address, ui_text, ui_date, ui_select, helper_uuid, helper_now_iso, helper_value
+      data_type: ui_date
+      required: true
+    hash_value:
+      description: Hash value of document as uploaded
+      # one of: ui_name, ui_address, ui_text, ui_date, ui_select, helper_uuid, helper_now_iso, helper_value
+      data_type: ui_text
+      required: true
 
 ### eof ###
 

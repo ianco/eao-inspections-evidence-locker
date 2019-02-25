@@ -1,0 +1,35 @@
+[
+    {
+        "attributes": {
+            "location": "Text", 
+            "project_name": "Text"
+        }, 
+        "schema": "inspection-site.eao-evidence-locker", 
+        "version": "1.0.0"
+    }, 
+    {
+        "attributes": {
+            "created_date": "2019-02-25T23:13:59.316930+00:00", 
+            "hash_value": "Text", 
+            "inspection_id": "Text", 
+            "project_name": "Text", 
+            "team_id": "Text", 
+            "updated_date": "2019-02-25T23:13:59.316869+00:00"
+        }, 
+        "schema": "safety-inspection.eao-evidence-locker", 
+        "version": "1.0.0"
+    }, 
+    {
+        "attributes": {
+            "created_date": "2019-02-25T23:13:59.317277+00:00", 
+            "document_id": "Text", 
+            "document_type": "Select", 
+            "hash_value": "Text", 
+            "inspection_id": "Text", 
+            "project_name": "Text", 
+            "updated_date": "2019-02-25T23:13:59.317247+00:00"
+        }, 
+        "schema": "inspection-document.eao-evidence-locker", 
+        "version": "1.0.0"
+    }
+]
