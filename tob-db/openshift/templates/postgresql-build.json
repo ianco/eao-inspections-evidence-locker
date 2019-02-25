@@ -85,7 +85,7 @@
             "displayName": "Source Context Directory",
             "description": "The source context directory.",
             "required": false,
-            "value": "tob-db/config"
+            "value": "starter-kit/credential-registry/server/tob-db/config"
         },
         {
             "name": "SOURCE_IMAGE_KIND",
