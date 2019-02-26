@@ -1,0 +1,11 @@
+#=========================================================
+# OpenShift template parameters for:
+# Component: tob-web
+# Template File: templates/angular-build.json
+#=========================================================
+# NAME=angular
+# OUTPUT_IMAGE_TAG=latest
+CPU_LIMIT=0
+MEMORY_LIMIT=0Mi
+CPU_REQUEST=0
+MEMORY_REQUEST=0Mi

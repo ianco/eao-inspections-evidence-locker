@@ -1,0 +1,24 @@
+#=========================================================
+# OpenShift template parameters for:
+# Component: tob-web
+# Template File: templates/angular-on-nginx/angular-on-nginx-deploy.json
+#=========================================================
+# NAME=angular-on-nginx
+# APP_GROUP=tob
+# IMAGE_NAMESPACE=eao-iuc-tools
+# REAL_IP_FROM=172.51.0.0/16
+# API_URL=
+# API_SERVICE_NAME=django
+# API_PATH=/api/v2/
+# AdditionalRealIpFromRules=
+# IpFilterRules=
+# BLACK_LIST_CONFIG_FILE_NAME=blacklist.conf
+# BLACK_LIST_CONFIG_MAP_NAME=blacklist-conf
+# BLACK_LIST_CONFIG_MOUNT_PATH=/etc/nginx/
+# APPLICATION_DOMAIN=angular-on-nginx-eao-iuc-dev.pathfinder.gov.bc.ca
+# TAG_NAME=dev
+# HTTP_BASIC=
+CPU_REQUEST=0
+CPU_LIMIT=0
+MEMORY_REQUEST=0Mi
+MEMORY_LIMIT=0Mi

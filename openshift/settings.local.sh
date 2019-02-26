@@ -5,11 +5,11 @@ export PROJECT_OS_DIR=${PROJECT_OS_DIR:-../openshift}
 # Templates NOT in this list will have they GIT referances over-ridden
 # with the values of GIT_URI and GIT_REF
 export skip_git_overrides="schema-spy-build.json solr-base-build.json backup-build.json"
-export GIT_URI="https://github.com/bcgov/eao-inspections-evidence-locker.git"
+export GIT_URI="https://github.com/esune/eao-inspections-evidence-locker.git"
 export GIT_REF="master"
 
 # The project components
-export components="tob-db tob-solr tob-api tob-web tob-wallet eao-agent eao-pipeline"
+export components="tob-db tob-solr tob-api tob-web tob-wallet tob-backup eao-agent eao-pipeline"
 
 # The builds to be triggered after buildconfigs created (not auto-triggered)
 export builds=""

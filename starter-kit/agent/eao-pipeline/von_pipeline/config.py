@@ -10,8 +10,8 @@ def config(filename='database.ini', section='postgresql'):
     elif section == 'event_processor':
         db['host'] = os.environ.get('EVENT_PROC_DB_HOST', 'localhost')
         db['port'] = os.environ.get('EVENT_PROC_DB_PORT', '5444')
-        db['database'] = os.environ.get('EVENT_PROC_DB_DATABASE', 'bc_reg_db')
-        db['user'] = os.environ.get('EVENT_PROC_DB_USER', 'bc_reg_db')
+        db['database'] = os.environ.get('EVENT_PROC_DB_DATABASE', 'eao_locker_db')
+        db['user'] = os.environ.get('EVENT_PROC_DB_USER', 'eao_locker_db')
         db['password'] = os.environ.get('EVENT_PROC_DB_PASSWORD', '')
     else:
         raise Exception('Section {0} not a valid database'.format(section))
