@@ -1,11 +1,11 @@
-export PROJECT_NAMESPACE="esm"
+export PROJECT_NAMESPACE="eao-iuc"
 export PROJECT_OS_DIR=${PROJECT_OS_DIR:-../openshift}
 
 # The templates that should not have their GIT referances(uri and ref) over-ridden
 # Templates NOT in this list will have they GIT referances over-ridden
 # with the values of GIT_URI and GIT_REF
 export skip_git_overrides="schema-spy-build.json solr-base-build.json backup-build.json"
-export GIT_URI="https://github.com/bcgov/eao-evidence-locker.git"
+export GIT_URI="https://github.com/bcgov/eao-inspections-evidence-locker.git"
 export GIT_REF="master"
 
 # The project components

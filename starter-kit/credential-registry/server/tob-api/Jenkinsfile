@@ -8,7 +8,7 @@ def TAG_NAMES = ['dev', 'test', 'prod']
 def BUILD_CONFIG = APP_NAME
 def IMAGESTREAM_NAME = APP_NAME
 def SCHEMA_SPY_IMAGSTREAM_NAME = 'schema-spy'
-def PROJECT_NAMESPACE = 'esm-'
+def PROJECT_NAMESPACE = 'eao-iuc-'
 def CONTEXT_DIRECTORY = 'tob-api'
 
 @NonCPS
@@ -99,7 +99,7 @@ node {
 
               // For this to work the Jenkins service mush have edit permissions within the deployment project.
               // Example OC cmd to accomplish this task (it's better if you have projet init scripts that do this);
-              // oc policy add-role-to-user edit system:serviceaccount:esm-tools:jenkins -n esm-dev
+              // oc policy add-role-to-user edit system:serviceaccount:eao-iuc-tools:jenkins -n eao-iuc-dev
               def dc = openshift.selector('dc', "${SCHEMA_SPY_IMAGSTREAM_NAME}")
               dc.scale("--replicas=0")
               dc.scale("--replicas=1")
