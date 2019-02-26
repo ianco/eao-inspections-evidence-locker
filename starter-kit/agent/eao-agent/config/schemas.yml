@@ -6,8 +6,13 @@
   endpoint: $ENDPOINT_URL
   path: /eao-evidence-locker/inspection-site
   # identify the attribute which identify the owning organization
-  topic: project_name
+  topic: project_id
   attributes:
+    project_id:
+      description: Project ID issued by the registering organization
+      # one of: ui_name, ui_address, ui_text, ui_date, ui_select, helper_uuid, helper_now_iso, helper_value
+      data_type: helper_uuid
+      required: true
     project_name:
       description: Project name issued by the registering organization
       # one of: ui_name, ui_address, ui_text, ui_date, ui_select, helper_uuid, helper_now_iso, helper_value
@@ -18,6 +23,11 @@
       # one of: ui_name, ui_address, ui_text, ui_date, ui_select, helper_uuid, helper_now_iso, helper_value
       data_type: ui_text
       required: true
+    status:
+      description: Project Status
+      # one of: ui_name, ui_address, ui_text, ui_date, ui_select, helper_uuid, helper_now_iso, helper_value
+      data_type: ui_select
+      required: true
 
 - name: safety-inspection.eao-evidence-locker
   version: '1.0.0'
@@ -25,14 +35,14 @@
   endpoint: $ENDPOINT_URL
   path: /eao-evidence-locker/safety-inspection
   # identify the attribute which identify the owning organization
-  topic: project_name
+  topic: project_id
   # optionally identify additional attributes to uniquely identify a credential
   cardinality: inspection_id
   # optionally identify a dependant proof request
   proof_request: registration
   attributes:
-    project_name:
-      description: Project name issued by the registering organization
+    project_id:
+      description: Project ID issued by the registering organization
       # one of: ui_name, ui_address, ui_text, ui_date, ui_select, helper_uuid, helper_now_iso, helper_value
       data_type: ui_text
       required: true
@@ -68,16 +78,17 @@
   endpoint: $ENDPOINT_URL
   path: /eao-evidence-locker/inspection-document
   # identify the attribute which identify the owning organization
-  topic: project_name
+  topic: project_id
   # optionally identify additional attributes to uniquely identify a credential
   cardinality: 
+    - project_id
     - inspection_id
     - document_id
     # optionally identify a dependant proof request
   proof_request: inspection
   attributes:
-    project_name:
-      description: Project name issued by the registering organization
+    project_id:
+      description: Project ID issued by the registering organization
       # one of: ui_name, ui_address, ui_text, ui_date, ui_select, helper_uuid, helper_now_iso, helper_value
       data_type: ui_text
       required: true
