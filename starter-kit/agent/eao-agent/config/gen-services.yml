@@ -1,0 +1,178 @@
+issuers:
+  myorg:
+    credential_types:
+    - description: The core site credential issued by EAO Evidence Locker
+      schema: inspection-site.eao-evidence-locker
+      issuer_url: $ENDPOINT_URL/eao-evidence-locker/inspection-site
+      topic:
+        source_id:
+          input: project_name
+          from: claim
+        type:
+          input: registration
+          from: value
+      mapping:
+      - model: attribute
+        fields:
+          type:
+            input: project_name
+            from: value
+          value:
+            input: project_name
+            from: claim
+      - model: attribute
+        fields:
+          type:
+            input: location
+            from: value
+          value:
+            input: location
+            from: claim
+    - description: The safety-inspection credential issued by EAO Evidence Locker
+      schema: safety-inspection.eao-evidence-locker
+      issuer_url: $ENDPOINT_URL/eao-evidence-locker/safety-inspection
+      depends_on:
+      - registration
+      topic:
+        source_id:
+          input: project_name
+          from: claim
+        type:
+          input: registration
+          from: value
+      cardinality_fields:
+      - inspection_id
+      mapping:
+      - model: attribute
+        fields:
+          type:
+            input: updated_date
+            from: value
+          format:
+            input: datetime
+            from: value
+          value:
+            input: updated_date
+            from: claim
+      - model: attribute
+        fields:
+          type:
+            input: team_id
+            from: value
+          value:
+            input: team_id
+            from: claim
+      - model: attribute
+        fields:
+          type:
+            input: project_name
+            from: value
+          value:
+            input: project_name
+            from: claim
+      - model: attribute
+        fields:
+          type:
+            input: inspection_id
+            from: value
+          value:
+            input: inspection_id
+            from: claim
+      - model: attribute
+        fields:
+          type:
+            input: created_date
+            from: value
+          format:
+            input: datetime
+            from: value
+          value:
+            input: created_date
+            from: claim
+      - model: attribute
+        fields:
+          type:
+            input: hash_value
+            from: value
+          value:
+            input: hash_value
+            from: claim
+    - description: A document credential attached to an inspection issued by EAO Evidence
+        Locker
+      schema: inspection-document.eao-evidence-locker
+      issuer_url: $ENDPOINT_URL/eao-evidence-locker/inspection-document
+      depends_on:
+      - inspection
+      topic:
+        source_id:
+          input: project_name
+          from: claim
+        type:
+          input: registration
+          from: value
+      cardinality_fields:
+      - - inspection_id
+        - document_id
+      mapping:
+      - model: attribute
+        fields:
+          type:
+            input: updated_date
+            from: value
+          format:
+            input: datetime
+            from: value
+          value:
+            input: updated_date
+            from: claim
+      - model: attribute
+        fields:
+          type:
+            input: project_name
+            from: value
+          value:
+            input: project_name
+            from: claim
+      - model: attribute
+        fields:
+          type:
+            input: inspection_id
+            from: value
+          value:
+            input: inspection_id
+            from: claim
+      - model: attribute
+        fields:
+          type:
+            input: created_date
+            from: value
+          format:
+            input: datetime
+            from: value
+          value:
+            input: created_date
+            from: claim
+      - model: attribute
+        fields:
+          type:
+            input: document_type
+            from: value
+          value:
+            input: document_type
+            from: claim
+      - model: attribute
+        fields:
+          type:
+            input: hash_value
+            from: value
+          value:
+            input: hash_value
+            from: claim
+      - model: attribute
+        fields:
+          type:
+            input: document_id
+            from: value
+          value:
+            input: document_id
+            from: claim

@@ -1,0 +1,108 @@
+forms:
+  eao-evidence-lockerinspection-site:
+    path: /eao-evidence-locker/inspection-site
+    type: issue-credential
+    schema_name: inspection-site.eao-evidence-locker
+    page_title: Title for inspection-site.eao-evidence-locker
+    title: Title for inspection-site.eao-evidence-locker
+    template: bcgov.index.html
+    description: The core site credential issued by EAO Evidence Locker
+    explanation: Use the form below to issue a Credential.
+    fields:
+    - name: project_name
+      label: project_name
+      type: text
+      required: true
+    - name: location
+      label: location
+      type: text
+      required: true
+    mappings:
+      attributes: []
+  eao-evidence-lockersafety-inspection:
+    path: /eao-evidence-locker/safety-inspection
+    type: issue-credential
+    schema_name: safety-inspection.eao-evidence-locker
+    page_title: Title for safety-inspection.eao-evidence-locker
+    title: Title for safety-inspection.eao-evidence-locker
+    template: bcgov.index.html
+    description: The safety-inspection credential issued by EAO Evidence Locker
+    explanation: Use the form below to issue a Credential.
+    proof_request:
+      id: registration
+      connection_id: bctob
+    fields:
+    - name: updated_date
+      label: updated_date
+      type: date
+      required: true
+    - name: team_id
+      label: team_id
+      type: text
+      required: true
+    - name: project_name
+      label: project_name
+      type: text
+      required: true
+    - name: inspection_id
+      label: inspection_id
+      type: text
+      required: true
+    - name: created_date
+      label: created_date
+      type: date
+      required: true
+    - name: hash_value
+      label: hash_value
+      type: text
+      required: true
+    mappings:
+      attributes: []
+  eao-evidence-lockerinspection-document:
+    path: /eao-evidence-locker/inspection-document
+    type: issue-credential
+    schema_name: inspection-document.eao-evidence-locker
+    page_title: Title for inspection-document.eao-evidence-locker
+    title: Title for inspection-document.eao-evidence-locker
+    template: bcgov.index.html
+    description: A document credential attached to an inspection issued by EAO Evidence
+      Locker
+    explanation: Use the form below to issue a Credential.
+    proof_request:
+      id: inspection
+      connection_id: bctob
+    fields:
+    - name: updated_date
+      label: updated_date
+      type: date
+      required: true
+    - name: project_name
+      label: project_name
+      type: text
+      required: true
+    - name: inspection_id
+      label: inspection_id
+      type: text
+      required: true
+    - name: created_date
+      label: created_date
+      type: date
+      required: true
+    - name: document_type
+      label: document_type
+      type: select
+      options:
+      - todo-1
+      - todo-2
+      - todo-3
+      required: true
+    - name: hash_value
+      label: hash_value
+      type: text
+      required: true
+    - name: document_id
+      label: document_id
+      type: text
+      required: true
+    mappings:
+      attributes: []
