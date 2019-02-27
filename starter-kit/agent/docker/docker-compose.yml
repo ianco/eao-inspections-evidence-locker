@@ -84,9 +84,12 @@ services:
       dockerfile: docker/mara-app/Dockerfile
     environment:
       - VONX_API_URL=${VONX_API_URL:-http://von-agent:8000/bcreg}
-      # TODO setup access to source database = mongo
       # [eao mongo database]
-      - MONGO_DB=${MONGO_DB:-http://mongo:27017/}
+      - EAO_MDB_DB_HOST=${EAO_MDB_DB_HOST:-mongo}
+      - EAO_MDB_DB_PORT=${EAO_MDB_DB_PORT:-27017}
+      - EAO_MDB_DB_DATABASE=${EAO_MDB_DB_DATABASE:-eao_db}
+      - EAO_MDB_DB_USER=${EAO_MDB_DB_USER:-root}
+      - EAO_MDB_DB_PASSWORD=${EAO_MDB_DB_PASSWORD:-example}
       # [event_processor]
       - EVENT_PROC_DB_HOST=${EVENT_PROC_DB_HOST:-von-pipeline-db}
       - EVENT_PROC_DB_PORT=${EVENT_PROC_DB_PORT:-5432}
@@ -101,9 +104,10 @@ services:
     networks:
       - myorg
     ports:
-      - "5050:5000"
+      - 5050:5000
     depends_on:
       - von-pipeline-db
+      - mongo
     entrypoint: >
       /bin/bash -c "
         echo sleeping ...;
@@ -132,6 +136,8 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: example
+    networks:
+      - myorg
     ports:
       - 27017:27017
     volumes:
