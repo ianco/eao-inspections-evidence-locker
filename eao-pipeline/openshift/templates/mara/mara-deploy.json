@@ -12,7 +12,12 @@
       "kind": "Service",
       "apiVersion": "v1",
       "metadata": {
-        "name": "${NAME}"
+        "name": "${NAME}",
+        "labels": {
+            "app": "evidence-locker",
+            "name": "${NAME}",
+            "template": "${NAME}-template"
+        }
       },
       "spec": {
         "ports": [
@@ -33,6 +38,11 @@
       "apiVersion": "v1",
       "metadata": {
         "name": "${NAME}",
+        "labels": {
+            "app": "evidence-locker",
+            "name": "${NAME}",
+            "template": "${NAME}-template"
+        },
         "annotations": {
           "description": "Defines how to deploy the container."
         }

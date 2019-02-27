@@ -12,7 +12,6 @@
         "labels": {
           "app": "evidence-locker-tools",
           "name": "${NAME}-persistent",
-          ,
           "template": "${NAME}-persistent-template",
           "app-group": "${APP_GROUP}"
         }
@@ -35,7 +34,9 @@
       "metadata": {
         "name": "${NAME}",
         "labels": {
-          "template": "${NAME}-deployment",
+          "app": "evidence-locker-tools",
+          "name": "${NAME}-persistent",
+          "template": "${NAME}-persistent-template",
           "app-group": "${APP_GROUP}"
         },
         "annotations": {
@@ -72,6 +73,7 @@
           "metadata": {
             "name": "${NAME}",
             "labels": {
+              "app": "evidence-locker-tools",
               "name": "${NAME}"
             }
           },
@@ -226,7 +228,7 @@
       "displayName": "Image Namespace",
       "description": "The namespace of the OpenShift project containing the imagestream for the application.",
       "required": true,
-      "value": "backup-container"
+      "value": "eao-iuc-tools"
     },
     {
       "name": "TAG_NAME",

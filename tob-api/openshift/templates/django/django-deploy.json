@@ -505,7 +505,7 @@
       "name": "APPLICATION_DOMAIN",
       "displayName": "Application Hostname",
       "description": "The exposed hostname that will route to the Django service, if left blank a value will be defaulted.",
-      "value": ""
+      "value": "django-eao-iuc-dev.pathfinder.gov.bc.ca"
     },
     {
       "name": "ROUTE_PATH",
@@ -585,7 +585,7 @@
       "displayName": "Wallet Credential Store Name",
       "description": "The name of the wallet credential store (aka The name of the secret that contains the wallet credentials).",
       "required": true,
-      "value": "wallet-credentials"
+      "value": "evidence-locker-wallet-credentials"
     },
     {
       "name": "APP_FILE",
@@ -752,9 +752,9 @@
     {
       "name": "APPLICATION_URL",
       "displayName": "Application url",
-      "description": "This service's url. If not specified, a value will be generated.",
-      "required": false,
-      "value": ""
+      "description": "This service's url.",
+      "required": true,
+      "value": "https://eao-inspections-evidence-locker-dev.pathfinder.gov.bc.ca/"
     },
     {
       "name": "EMAIL_SETTINGS_STORE_NAME",

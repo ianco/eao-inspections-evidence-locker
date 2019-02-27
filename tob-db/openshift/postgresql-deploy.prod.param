@@ -8,7 +8,7 @@
 # IMAGE_NAMESPACE=eao-iuc-tools
 # SOURCE_IMAGE_NAME=postgresql
 TAG_NAME=prod
-# POSTGRESQL_DATABASE_NAME=[a-zA-Z_][a-zA-Z0-9_]{10}
+# POSTGRESQL_DATABASE_NAME=Evidence_Locker_Database
 # POSTGRESQL_USER=[a-zA-Z_][a-zA-Z0-9_]{10}
 # POSTGRESQL_PASSWORD=[a-zA-Z0-9_~!@#$%^&*()-=<>,.?;:|]{16}
 # POSTGRESQL_ADMIN_PASSWORD=[a-zA-Z0-9_~!@#$%^&*()-=<>,.?;:|]{16}

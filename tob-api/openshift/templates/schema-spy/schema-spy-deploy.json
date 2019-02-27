@@ -30,6 +30,11 @@
       "apiVersion": "v1",
       "metadata": {
         "name": "${NAME}",
+        "labels": {
+          "app": "evidence-locker-tools",
+          "name": "${NAME}",
+          "app-group": "${APP_GROUP}"
+        },
         "annotations": {
           "description": "Exposes and load balances the application pods"
         }
@@ -120,6 +125,7 @@
           "metadata": {
             "name": "${NAME}",
             "labels": {
+              "app": "evidence-locker-tools",
               "name": "${NAME}"
             }
           },

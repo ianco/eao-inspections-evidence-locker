@@ -109,14 +109,14 @@ build-web() {
   echo -e "\nBuilding nginx-runtime image ..."
   docker build -q \
     -t 'nginx-runtime' \
-    -f '../../../credential-registry/docker/tob-web/nginx-runtime/Dockerfile' '../../../credential-registry/docker/tob-web/nginx-runtime/'
+    -f '../../../credential-registry/client/docker/tob-web/nginx-runtime/Dockerfile' '../../../credential-registry/client/docker/tob-web/nginx-runtime/'
 
   # This image only exists to pre-create the npm cache directory
   # so it can be properly used as a volume, it doesn't apply to openshift
   echo -e "\nBuilding nodejs-build image ..."
   docker build -q \
     -t 'nodejs-build' \
-    -f '../../../credential-registry/docker/tob-web/nodejs-build/Dockerfile' '../../../credential-registry/docker/tob-web/nodejs-build/'
+    -f '../../../credential-registry/client/docker/tob-web/nodejs-build/Dockerfile' '../../../credential-registry/client/docker/tob-web/nodejs-build/'
 
   if [ -t 0 ]; then
     # color npm output in interactive terminal
@@ -172,7 +172,7 @@ build-web-dev() {
   echo -e "\nBuilding nodejs-build image ..."
   docker build -q \
     -t 'nodejs-build' \
-    -f '../docker/tob-web/nodejs-build/Dockerfile' '../docker/tob-web/nodejs-build/'
+    -f '../client/docker/tob-web/nodejs-build/Dockerfile' '../client/docker/tob-web/nodejs-build/'
 
   # NB: We build with DEV_MODE=true but run with DEV_MODE=false
   echo -e "\nBuilding angular-dev image ..."
@@ -261,7 +261,7 @@ build-api() {
   echo -e "\nBuilding enhanced von-image..."
   docker build -q \
     -t 'von-image-ext' \
-    -f '../../../credential-registry/docker/von-image-ext/Dockerfile' '../../../credential-registry/server/'
+    -f '../../../credential-registry/server/docker/von-image-ext/Dockerfile' '../../../credential-registry/server/'
   BASE_IMAGE="von-image-ext"
   #BASE_IMAGE="bcgovimages/von-image:py36-1.7-ew-0-s2i"
   echo -e "\nBuilding django image from ${BASE_IMAGE}..."

@@ -15,7 +15,7 @@ export components="tob-db tob-solr tob-api tob-web tob-wallet tob-backup eao-age
 export builds=""
 
 # The images to be tagged after build
-export images="angular-on-nginx django solr schema-spy"
+export images="angular-on-nginx django eao-agent mara solr schema-spy"
 
 # The routes for the project
 export routes="angular-on-nginx django solr schema-spy"
