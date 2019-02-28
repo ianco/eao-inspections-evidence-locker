@@ -48,6 +48,10 @@
               {
                 "name": "TOB_THEME",
                 "value": "${TOB_THEME}"
+              },
+              {
+                "name": "TOB_THEME_PATH",
+                "value": "${TOB_THEME_PATH}"
               }
             ]
           }
@@ -132,7 +136,13 @@
       "name": "TOB_THEME",
       "displayName": "TheOrgBook Theme Name",
       "description": "The name of the theme to be used for the site.",
-      "value": "default"
+      "value": "bcgov"
+    },
+    {
+      "name": "TOB_THEME_PATH",
+      "displayName": "TheOrgBook Theme Name",
+      "description": "The name of the theme to be used for the site.",
+      "value": "starter-kit/credential-registry/client/tob-web/themes"
     },
     {
       "name": "CPU_LIMIT",
