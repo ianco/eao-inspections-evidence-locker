@@ -88,7 +88,7 @@ def gen_inspection(user, team):
         "subtitle":random_alpha_string(40, contains_spaces=True),
         "title":random_alpha_string(40, contains_spaces=True),
         "uploaded":True,
-        "project":random_alpha_string(40, contains_spaces=True),
+        "project":'SITE ' + random_alpha_string(40, contains_spaces=True),
         "isSubmitted":True,
         "isActive":True,
     }

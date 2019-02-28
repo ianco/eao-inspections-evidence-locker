@@ -44,12 +44,13 @@ issuers:
       mapping:
       - model: name
         fields:
+        fields:
+          text:
+            input: project_name
+            from: claim
           type:
             input: project_name
             from: value
-          value:
-            input: project_name
-            from: claim
       - model: attribute
         fields:
           type:
@@ -61,13 +62,13 @@ issuers:
       - model: attribute
         fields:
           type:
-            input: status
+            input: entity_status
             from: value
           format:
             input: category
             from: value
           value:
-            input: status
+            input: entity_status
             from: claim
 
     - description: The safety-inspection credential issued by EAO Evidence Locker

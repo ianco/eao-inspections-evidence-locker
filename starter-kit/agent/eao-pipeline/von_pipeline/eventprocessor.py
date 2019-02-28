@@ -423,7 +423,6 @@ class EventProcessor:
         cred_json = json.dumps(credential, cls=CustomJsonEncoder, sort_keys=True)
         cred_hash = hashlib.sha256(cred_json.encode('utf-8')).hexdigest()
         try:
-            print("Storing credential")
             cur.execute("savepoint save_" + cred_type)
             cur.execute(sql, (system_cd, cred_type, cred_id, schema_name, schema_version, cred_json, cred_hash, datetime.datetime.now(),))
             return 1
@@ -481,7 +480,7 @@ class EventProcessor:
         site_cred['project_id'] = site['PROJECT_ID']
         site_cred['project_name'] = site['PROJECT_NAME']
         site_cred['location'] = 'Vancouver'
-        site_cred['status'] = 'ACT'
+        site_cred['entity_status'] = 'ACT'
 
         return self.build_credential_dict(site_credential, site_schema, site_version, site_cred['project_id'], site_cred)
 
@@ -576,6 +575,14 @@ class EventProcessor:
                 cur.close()
 
 
+    # derive a project id from a name (determanistic)
+    def project_name_to_id(self, project_name):
+        # in test data, all project names start with 'SITE'
+        subname = project_name[5:]
+        # first 10 non-space chars
+        subname = subname.strip()
+        return subname[:10]
+
     # find all un-processed objects in mongo db
     def find_unprocessed_objects(self):
         unprocessed_objects = []
@@ -586,7 +593,7 @@ class EventProcessor:
                 todo_obj = {}
                 todo_obj['SYSTEM_TYPE_CD'] = system_type
                 if collection == 'inspections':
-                    todo_obj['PROJECT_ID'] = unprocessed['project']
+                    todo_obj['PROJECT_ID'] = self.project_name_to_id(unprocessed['project'])
                     todo_obj['PROJECT_NAME'] = unprocessed['project']
                 elif collection == 'observations':
                     todo_obj['observationId'] = unprocessed['_id']
