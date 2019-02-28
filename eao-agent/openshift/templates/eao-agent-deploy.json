@@ -280,6 +280,33 @@
       }
     },
     {
+      "kind": "Route",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "${NAME}",
+        "labels": {
+          "app": "evidence-locker",
+          "name": "${NAME}",
+          "app-group": "${APP_GROUP}"
+        }
+      },
+      "spec": {
+        "host": "${APPLICATION_URL}",
+        "port": {
+          "targetPort": "8080-tcp"
+        },
+        "tls": {
+          "insecureEdgeTerminationPolicy": "Redirect",
+          "termination": "edge"
+        },
+        "to": {
+          "kind": "Service",
+          "name": "${NAME}",
+          "weight": 100
+        }
+      }
+    },
+    {
       "kind": "PersistentVolumeClaim",
       "apiVersion": "v1",
       "metadata": {
@@ -328,7 +355,7 @@
       "displayName": "Application Url",
       "description": "The application URL.",
       "required": true,
-      "value": "https://eao-agent-eao-iuc-dev.pathfinder.gov.bc.ca/"
+      "value": "https://eao-agent-dev.pathfinder.gov.bc.ca"
     },
     {
       "name": "ENDPOINT_URL",
@@ -426,14 +453,14 @@
       "displayName": "TOB API URL",
       "description": "The URL of the TOB API.",
       "required": true,
-      "value": "https://django-eao-iuc-dev.pathfinder.gov.bc.ca/api/v2/indy"
+      "value": "https://eao-evidence-locker-api-dev.pathfinder.gov.bc.ca/api/v2"
     },
     {
       "name": "TOB_APP_URL",
       "displayName": "TOB Application URL",
       "description": "The URL of the TOB application.",
       "required": true,
-      "value": "https://angular-on-nginx-eao-iuc-dev.pathfinder.gov.bc.ca/"
+      "value": "https://eao-evidence-locker-dev.pathfinder.gov.bc.ca"
     },
     {
       "name": "WALLET_TYPE",
