@@ -1,0 +1,37 @@
+#=========================================================
+# OpenShift template parameters for:
+# Component: eao-agent
+# Template File: templates/eao-agent-deploy.json
+#=========================================================
+# NAME=eao-agent
+# IMAGE_NAMESPACE=eao-iuc-tools
+TAG_NAME=dev
+# APPLICATION_URL=https://eao-agent-eao-iuc-dev.pathfinder.gov.bc.ca/
+# ENDPOINT_URL=eao-agent:8080
+# CONFIG_ROOT=../config
+# HOST_PORT=8080
+# ENVIRONMENT=default
+# ENABLE_GUNICORN=0
+# INDY_GENESIS_URL=
+# INDY_LEDGER_URL=http://dev.bcovrin.vonx.io
+# LEDGER_PROTOCOL_VERSION=
+# AUTO_REGISTER_DID=1
+# FORMS=
+# ISSUERS=
+# LOG_LEVEL=
+# PYTHON_ENV=development
+# TOB_API_URL=https://django-eao-iuc-dev.pathfinder.gov.bc.ca/api/v2/indy
+# TOB_APP_URL=https://angular-on-nginx-eao-iuc-dev.pathfinder.gov.bc.ca/
+# WALLET_TYPE=postgres_storage
+# POSTGRESQL_WALLET_HOST=wallet-db
+# POSTGRESQL_WALLET_PORT=5432
+# WALLET_ENCRYPTION_KEY=[a-zA-Z0-9_~!@#$%^&*()-=<>,.?;:|]{16}
+# INDY_WALLET_SEED=[a-zA-Z0-9_~!@#$%^&*()-=<>,.?;:|]{16}
+# INDY_WALLET_DID=[a-zA-Z0-9_~!@#$%^&*()-=<>,.?;:|]{16}
+# WALLET_CREDENTIAL_STORE_NAME=agent-wallet-credentials
+# MOUNT_PATH=/home/indy/.indy_client/wallet
+# PERSISTENT_VOLUME_SIZE=1Gi
+# CPU_LIMIT=0
+# MEMORY_LIMIT=0Mi
+# CPU_REQUEST=0
+# MEMORY_REQUEST=0Mi

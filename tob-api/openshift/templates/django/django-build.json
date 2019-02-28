@@ -105,14 +105,14 @@
       "displayName": "Source Image Name",
       "required": true,
       "description": "The name of the source image.",
-      "value": "bcgovimages/von-image"
+      "value": "von-image-ext"
     },
     {
       "name": "SOURCE_IMAGE_TAG",
       "displayName": "Source Image Tag",
       "required": true,
       "description": "The tag of the source image.",
-      "value": "py36-1.7-ew-0-s2i"
+      "value": "latest"
     },
     {
       "name": "PIP_INDEX_URL",

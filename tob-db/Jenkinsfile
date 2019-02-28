@@ -5,7 +5,7 @@ def APP_NAME = 'postgresql'
 def TAG_NAMES = ['dev', 'test', 'prod']
 
 // Edit your application's context directory here
-def CONTEXT_DIRECTORY = 'tob-db'
+def CONTEXT_DIRECTORY = 'starter-kit/credential-registry/server/tob-db'
 
 // You shouldn't have to edit these if you're following the conventions
 def BUILD_CONFIG = APP_NAME
