@@ -1,10 +1,15 @@
 #=========================================================
 # OpenShift template parameters for:
-# Component: tob-web
-# Template File: templates/nginx-runtime/nginx-runtime.json
+# Component: eao-agent
+# Template File: templates/eao-agent-build.json
 #=========================================================
-NAME=nginx-runtime
+NAME=eao-agent
 GIT_REPO_URL=https://github.com/bcgov/eao-inspections-evidence-locker.git
 GIT_REF=master
-SOURCE_CONTEXT_DIR=credential-registry/client/docker/tob-web/nginx-runtime/
+SOURCE_CONTEXT_DIR=starter-kit/agent/eao-agent
 OUTPUT_IMAGE_TAG=latest
+DOCKER_FILE_PATH=Dockerfile
+CPU_LIMIT=0
+MEMORY_LIMIT=0Mi
+CPU_REQUEST=0
+MEMORY_REQUEST=0Mi

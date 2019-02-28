@@ -3,7 +3,7 @@
 # Component: tob-web
 # Template File: templates/angular-build.json
 #=========================================================
-NAME=angular
+NAME=angular-app
 OUTPUT_IMAGE_TAG=latest
 GIT_REPO_URL=https://github.com/bcgov/eao-inspections-evidence-locker.git
 GIT_REF=master
