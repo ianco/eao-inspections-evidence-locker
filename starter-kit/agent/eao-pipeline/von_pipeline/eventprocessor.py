@@ -562,6 +562,7 @@ class EventProcessor:
                         for video in observation['videos']:
                             pass
 
+            self.conn.commit()
             cur.close()
             cur = None
 

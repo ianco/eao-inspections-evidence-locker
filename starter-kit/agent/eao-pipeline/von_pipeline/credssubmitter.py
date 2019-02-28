@@ -70,11 +70,6 @@ async def submit_cred(http_client, attrs, schema, version):
         print(exc)
         raise
 
-# add reason code to the submitted credential
-def inject_reason(attributes, reason):
-  attributes['reason_description'] = reason
-  return attributes
-
 async def post_credentials(http_client, conn, credentials):
     sql2 = """UPDATE CREDENTIAL_LOG
               SET PROCESS_DATE = %s, PROCESS_SUCCESS = 'Y', PROCESS_MSG = %s
@@ -89,8 +84,6 @@ async def post_credentials(http_client, conn, credentials):
     post_creds = []
     for credential in credentials:
       # need to inject reason into this process
-      if credential['CREDENTIAL_REASON'] is not None and 0 < len(credential['CREDENTIAL_REASON']):
-        credential['CREDENTIAL_JSON'] = inject_reason(credential['CREDENTIAL_JSON'], credential['CREDENTIAL_REASON'])
       post_creds.append({"schema":credential['SCHEMA_NAME'], "version":credential['SCHEMA_VERSION'], "attributes":credential['CREDENTIAL_JSON']})
 
     # post credential
@@ -182,14 +175,9 @@ class CredsSubmitter:
     async def process_credential_queue(self, single_thread=False):
         sql1 = """SELECT RECORD_ID, 
                       SYSTEM_TYPE_CD, 
-                      PREV_EVENT, 
-                      LAST_EVENT, 
-                      CORP_NUM, 
-                      CORP_STATE, 
                       CREDENTIAL_TYPE_CD, 
                       CREDENTIAL_ID, 
                       CREDENTIAL_JSON, 
-                      CREDENTIAL_REASON, 
                       SCHEMA_NAME, 
                       SCHEMA_VERSION, 
                       ENTRY_DATE
@@ -207,34 +195,6 @@ class CredsSubmitter:
         sql1a = """SELECT count(*) cnt
                    FROM CREDENTIAL_LOG 
                    WHERE PROCESS_DATE is null"""
-
-        sql1_active = """SELECT RECORD_ID, 
-                             SYSTEM_TYPE_CD, 
-                             PREV_EVENT, 
-                             LAST_EVENT, 
-                             CORP_NUM, 
-                             CORP_STATE, 
-                             CREDENTIAL_TYPE_CD, 
-                             CREDENTIAL_ID, 
-                             CREDENTIAL_JSON, 
-                             CREDENTIAL_REASON, 
-                             SCHEMA_NAME, 
-                             SCHEMA_VERSION, 
-                             ENTRY_DATE
-                         FROM CREDENTIAL_LOG 
-                         WHERE RECORD_ID IN
-                         (
-                             SELECT RECORD_ID
-                             FROM CREDENTIAL_LOG 
-                             WHERE CORP_STATE = 'ACT' and PROCESS_DATE is null
-                             ORDER BY RECORD_ID
-                             LIMIT """ + str(CREDS_BATCH_SIZE) + """
-                         )                  
-                         ORDER BY RECORD_ID;"""
-
-        sql1a_active = """SELECT count(*) cnt
-                          FROM CREDENTIAL_LOG 
-                          WHERE corp_state = 'ACT' and PROCESS_DATE is null;"""
 
         """ Connect to the PostgreSQL database server """
         #conn = None
@@ -264,21 +224,9 @@ class CredsSubmitter:
             max_processing_time = 10 * 60
 
             while 0 < cred_count_remaining and processing_time < max_processing_time:
-                active_cred_count = 0
-                cur = self.conn.cursor()
-                cur.execute(sql1a_active)
-                row = cur.fetchone()
-                if row is not None:
-                    active_cred_count = row[0]
-                cur.close()
-                cur = None
-
                 # create a cursor
                 cur = self.conn.cursor()
-                if 0 < active_cred_count:
-                    cur.execute(sql1_active)
-                else:
-                    cur.execute(sql1)
+                cur.execute(sql1)
                 row = cur.fetchone()
                 credentials = []
                 cred_owner_id = ''
@@ -290,12 +238,12 @@ class CredsSubmitter:
                       processing_time = time.perf_counter() - start_time
                       print('Processing: ' + str(processing_time))
                       processed_count = 0
-                    credential = {'RECORD_ID':row[0], 'SYSTEM_TYP_CD':row[1], 'PREV_EVENT':row[2], 'LAST_EVENT':row[3], 'CORP_NUM':row[4], 'CORP_STATE':row[5],
-                                  'CREDENTIAL_TYPE_CD':row[6], 'CREDENTIAL_ID':row[7], 'CREDENTIAL_JSON':row[8], 'CREDENTIAL_REASON':row[9], 
-                                  'SCHEMA_NAME':row[10], 'SCHEMA_VERSION':row[11], 'ENTRY_DATE':row[12]}
+                    credential = {'RECORD_ID':row[0], 'SYSTEM_TYP_CD':row[1], 
+                                  'CREDENTIAL_TYPE_CD':row[2], 'CREDENTIAL_ID':row[3], 'CREDENTIAL_JSON':row[4],  
+                                  'SCHEMA_NAME':row[5], 'SCHEMA_VERSION':row[6], 'ENTRY_DATE':row[7]}
 
-                    # make sure to include all credentials for the same client id within the same batch
-                    if CREDS_REQUEST_SIZE <= len(credentials) and credential['CORP_NUM'] != cred_owner_id:
+                    # TODO make sure to include all credentials for the same client id within the same batch
+                    if CREDS_REQUEST_SIZE <= len(credentials): # and credential['CORP_NUM'] != cred_owner_id:
                         post_creds = credentials.copy()
                         creds_task = loop.create_task(post_credentials(http_client, self.conn, post_creds))
                         tasks.append(creds_task)
@@ -316,7 +264,7 @@ class CredsSubmitter:
                         cred_owner_id = ''
 
                     credentials.append(credential)
-                    cred_owner_id = credential['CORP_NUM']
+                    #TODO cred_owner_id = credential['CORP_NUM']
                     
                     row = cur.fetchone()
 

@@ -83,7 +83,7 @@ services:
       context: ../eao-pipeline
       dockerfile: docker/mara-app/Dockerfile
     environment:
-      - VONX_API_URL=${VONX_API_URL:-http://von-agent:8000/bcreg}
+      - VONX_API_URL=${VONX_API_URL:-http://myorg-agent:8000/eao-evidence-locker}
       # [eao mongo database]
       - EAO_MDB_DB_HOST=${EAO_MDB_DB_HOST:-mongo}
       - EAO_MDB_DB_PORT=${EAO_MDB_DB_PORT:-27017}
