@@ -2,11 +2,15 @@
  
 import psycopg2
 from pymongo import MongoClient
+from bson.objectid import ObjectId
 import datetime
 import pytz
 import json
 import time
+import decimal
+import random
 import hashlib
+import types
 import traceback
 from von_pipeline.config import config
 
@@ -67,6 +71,8 @@ class CustomJsonEncoder(json.JSONEncoder):
             for s in next(o):
                 ret = ret + str(s)
             return ret
+        if isinstance(o, ObjectId):
+            return str(o)
         return json.JSONEncoder.default(self, o)
 
 class DateTimeEncoder(json.JSONEncoder):
@@ -136,14 +142,6 @@ class EventProcessor:
             (SYSTEM_TYPE_CD);
             """,
             """
-            CREATE INDEX IF NOT EXISTS le_ie ON LAST_EVENT 
-            (EVENT_ID);
-            """,
-            """
-            CREATE INDEX IF NOT EXISTS le_stc_ei ON LAST_EVENT 
-            (SYSTEM_TYPE_CD, EVENT_ID);
-            """,
-            """
             CREATE TABLE IF NOT EXISTS EVENT_HISTORY_LOG (
                 RECORD_ID SERIAL PRIMARY KEY,
                 SYSTEM_TYPE_CD VARCHAR(255) NOT NULL, 
@@ -193,17 +191,13 @@ class EventProcessor:
             CREATE TABLE IF NOT EXISTS CREDENTIAL_LOG (
                 RECORD_ID SERIAL PRIMARY KEY,
                 SYSTEM_TYPE_CD VARCHAR(255) NOT NULL, 
-                PROJECT_ID VARCHAR(255) NOT NULL,
-                PROJECT_NAME VARCHAR(255) NOT NULL,
                 CREDENTIAL_TYPE_CD VARCHAR(255) NOT NULL,
                 CREDENTIAL_ID VARCHAR(255) NOT NULL,
                 SCHEMA_NAME VARCHAR(255) NOT NULL,
                 SCHEMA_VERSION VARCHAR(255) NOT NULL,
                 CREDENTIAL_JSON JSON NOT NULL,
                 CREDENTIAL_HASH VARCHAR(64) NOT NULL, 
-                CREDENTIAL_REASON VARCHAR(255),
                 ENTRY_DATE TIMESTAMP NOT NULL,
-                END_DATE TIMESTAMP,
                 PROCESS_DATE TIMESTAMP,
                 PROCESS_SUCCESS CHAR,
                 PROCESS_MSG VARCHAR(255)
@@ -218,21 +212,6 @@ class EventProcessor:
             -- Hit for counts and queries
             CREATE INDEX IF NOT EXISTS cl_pd_null ON CREDENTIAL_LOG 
             (PROCESS_DATE) WHERE PROCESS_DATE IS NULL;
-            """,
-            """
-            -- Hit for counts
-            CREATE INDEX IF NOT EXISTS cl_pd_null_cs_act ON CREDENTIAL_LOG 
-            (PROCESS_DATE, CORP_STATE) WHERE CORP_STATE = 'ACT' and PROCESS_DATE IS NULL;
-            """,
-            """
-            -- Hit for counts
-            CREATE INDEX IF NOT EXISTS cl_cs_act_pd_null_ri_asc ON CREDENTIAL_LOG 
-            (CORP_STATE, PROCESS_DATE, RECORD_ID ASC) WHERE CORP_STATE = 'ACT' and PROCESS_DATE IS NULL;
-            """,
-            """
-            -- Hit for queries
-            CREATE INDEX IF NOT EXISTS cl_ri_cs_act_pd_null_asc ON CREDENTIAL_LOG 
-            (RECORD_ID ASC, CORP_STATE, PROCESS_DATE) WHERE CORP_STATE = 'ACT' and PROCESS_DATE IS NULL;
             """,
             """
             -- Hit for query
@@ -444,6 +423,7 @@ class EventProcessor:
         cred_json = json.dumps(credential, cls=CustomJsonEncoder, sort_keys=True)
         cred_hash = hashlib.sha256(cred_json.encode('utf-8')).hexdigest()
         try:
+            print("Storing credential")
             cur.execute("savepoint save_" + cred_type)
             cur.execute(sql, (system_cd, cred_type, cred_id, schema_name, schema_version, cred_json, cred_hash, datetime.datetime.now(),))
             return 1
@@ -690,57 +670,6 @@ class EventProcessor:
 
     # process inbound data from the mongodb inspections database
     def process_event_queue(self):
-        sql1 = """SELECT RECORD_ID, 
-                         SYSTEM_TYPE_CD, 
-                         PREV_EVENT_ID, 
-                         PREV_EVENT_DATE, 
-                         LAST_EVENT_ID, 
-                         LAST_EVENT_DATE, 
-                         CORP_NUM, 
-                         ENTRY_DATE
-                  FROM EVENT_BY_CORP_FILING
-                  WHERE RECORD_ID IN
-                  (
-                    SELECT RECORD_ID
-                    FROM EVENT_BY_CORP_FILING 
-                    WHERE PROCESS_DATE is null
-                    ORDER BY RECORD_ID
-                    LIMIT !BS!
-                  )
-                  ORDER BY RECORD_ID;"""
-
-        sql1a = """SELECT RECORD_ID, 
-                          SYSTEM_TYPE_CD, 
-                          PREV_EVENT, 
-                          LAST_EVENT, 
-                          CORP_NUM, 
-                          CORP_JSON, 
-                          ENTRY_DATE
-                   FROM CORP_HISTORY_LOG
-                   WHERE RECORD_ID IN
-                   (
-                     SELECT RECORD_ID
-                     FROM CORP_HISTORY_LOG 
-                     WHERE PROCESS_DATE is null
-                     ORDER BY RECORD_ID
-                     LIMIT !BS!
-                   )
-                   ORDER BY RECORD_ID;"""
-
-        sql2 = """INSERT INTO CORP_HISTORY_LOG (SYSTEM_TYPE_CD, PREV_EVENT, LAST_EVENT, CORP_NUM, CORP_STATE, CORP_JSON, ENTRY_DATE)
-                  VALUES(%s, %s, %s, %s, %s, %s, %s) RETURNING RECORD_ID;"""
-        sql2a = """INSERT INTO CORP_HISTORY_LOG (SYSTEM_TYPE_CD, PREV_EVENT, LAST_EVENT, CORP_NUM, CORP_STATE, CORP_JSON, ENTRY_DATE, PROCESS_DATE, PROCESS_SUCCESS, PROCESS_MSG)
-                  VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING RECORD_ID;"""
-        sql2b = """INSERT INTO EVENT_BY_CORP_FILING (SYSTEM_TYPE_CD, PREV_EVENT_ID, PREV_EVENT_DATE, LAST_EVENT_ID, LAST_EVENT_DATE, CORP_NUM, ENTRY_DATE)
-                 VALUES(%s, %s, %s, %s, %s, %s, %s) RETURNING RECORD_ID;"""
-
-        sql3 = """UPDATE EVENT_BY_CORP_FILING
-                  SET PROCESS_DATE = %s, PROCESS_SUCCESS = %s, PROCESS_MSG = %s
-                  WHERE RECORD_ID = %s"""
-        sql3a = """UPDATE CORP_HISTORY_LOG
-                  SET PROCESS_DATE = %s, PROCESS_SUCCESS = %s, PROCESS_MSG = %s
-                  WHERE RECORD_ID = %s"""
-
         cur = None
         start_time = time.perf_counter()
         processing_time = 0
@@ -751,11 +680,15 @@ class EventProcessor:
 
         # find all un-processed objects from mongodb
         mongo_rows = self.find_unprocessed_objects()
+        print("Row count = ", len(mongo_rows))
 
         # organize by project/inspection/observation
         mongo_objects = self.organize_unprocessed_objects(mongo_rows)
+        print("Object count = ", len(mongo_objects))
 
-        creds = self.generate_all_credentials(obj_tree)
+        # generate and save credentials
+        creds = self.generate_all_credentials(mongo_objects)
+        print("Generated cred count = ", len(creds))
 
 
     def display_event_processing_status(self):
