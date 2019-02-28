@@ -286,8 +286,7 @@
         "name": "${NAME}",
         "labels": {
           "app": "evidence-locker",
-          "name": "${NAME}",
-          "app-group": "${APP_GROUP}"
+          "name": "${NAME}"
         }
       },
       "spec": {
