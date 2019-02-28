@@ -1,14 +1,11 @@
 #=========================================================
 # OpenShift template parameters for:
 # Component: tob-api
-# Template File: templates/django/django-build.json
+# Template File: templates/von-image-ext/von-image-ext-build.json
 #=========================================================
-NAME=django
+NAME=von-image-ext
 GIT_REPO_URL=https://github.com/bcgov/eao-inspections-evidence-locker.git
 GIT_REF=master
-SOURCE_CONTEXT_DIR=starter-kit/credential-registry/server/tob-api
-SOURCE_IMAGE_KIND=DockerImage
-SOURCE_IMAGE_NAME=von-image-ext
-SOURCE_IMAGE_TAG=latest
-PIP_INDEX_URL=
+SOURCE_CONTEXT_DIR=credential-registry/server
 OUTPUT_IMAGE_TAG=latest
+DOCKER_FILE_PATH=docker/von-image-ext/Dockerfile
