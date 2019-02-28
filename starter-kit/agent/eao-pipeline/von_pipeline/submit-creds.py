@@ -17,7 +17,7 @@
 #
 
 import asyncio
-from bcreg.credssubmitter import CredsSubmitter
+from von_pipeline.credssubmitter import CredsSubmitter
 
 
 loop = asyncio.get_event_loop()
