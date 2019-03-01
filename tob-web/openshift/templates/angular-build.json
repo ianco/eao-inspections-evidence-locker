@@ -48,6 +48,10 @@
               {
                 "name": "TOB_THEME",
                 "value": "${TOB_THEME}"
+              },
+              {
+                "name": "TOB_THEME_PATH",
+                "value": "${TOB_THEME_PATH}"
               }
             ]
           }

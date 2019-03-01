@@ -5,7 +5,7 @@
 #=========================================================
 # NAME=mara
 # IMAGE_NAMESPACE=eao-iuc-tools
-TAG_NAME=dev
+TAG_NAME=prod
 # HOST_NAME=0.0.0.0
 # HOST_PORT=8080
 # VONX_API_URL=http://eao-agent:8080/inspections-locker

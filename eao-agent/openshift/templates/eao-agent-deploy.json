@@ -280,6 +280,32 @@
       }
     },
     {
+      "kind": "Route",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "${NAME}",
+        "labels": {
+          "app": "evidence-locker",
+          "name": "${NAME}"
+        }
+      },
+      "spec": {
+        "host": "${APPLICATION_URL}",
+        "port": {
+          "targetPort": "8080-tcp"
+        },
+        "tls": {
+          "insecureEdgeTerminationPolicy": "Redirect",
+          "termination": "edge"
+        },
+        "to": {
+          "kind": "Service",
+          "name": "${NAME}",
+          "weight": 100
+        }
+      }
+    },
+    {
       "kind": "PersistentVolumeClaim",
       "apiVersion": "v1",
       "metadata": {
@@ -328,7 +354,7 @@
       "displayName": "Application Url",
       "description": "The application URL.",
       "required": true,
-      "value": "https://eao-agent-eao-iuc-dev.pathfinder.gov.bc.ca/"
+      "value": "https://eao-agent-dev.pathfinder.gov.bc.ca"
     },
     {
       "name": "ENDPOINT_URL",
@@ -426,14 +452,14 @@
       "displayName": "TOB API URL",
       "description": "The URL of the TOB API.",
       "required": true,
-      "value": "https://django-eao-iuc-dev.pathfinder.gov.bc.ca/api/v2/indy"
+      "value": "https://eao-evidence-locker-api-dev.pathfinder.gov.bc.ca/api/v2"
     },
     {
       "name": "TOB_APP_URL",
       "displayName": "TOB Application URL",
       "description": "The URL of the TOB application.",
       "required": true,
-      "value": "https://angular-on-nginx-eao-iuc-dev.pathfinder.gov.bc.ca/"
+      "value": "https://eao-evidence-locker-dev.pathfinder.gov.bc.ca"
     },
     {
       "name": "WALLET_TYPE",
@@ -506,28 +532,28 @@
       "displayName": "Resources CPU Limit",
       "description": "The resources CPU limit (in cores) for this build.",
       "required": true,
-      "value": "0"
+      "value": "250m"
     },
     {
       "name": "MEMORY_LIMIT",
       "displayName": "Resources Memory Limit",
       "description": "The resources Memory limit (in Mi, Gi, etc) for this build.",
       "required": true,
-      "value": "0Mi"
+      "value": "256Mi"
     },
     {
       "name": "CPU_REQUEST",
       "displayName": "Resources CPU Request",
       "description": "The resources CPU request (in cores) for this build.",
       "required": true,
-      "value": "0"
+      "value": "10m"
     },
     {
       "name": "MEMORY_REQUEST",
       "displayName": "Resources Memory Request",
       "description": "The resources Memory request (in Mi, Gi, etc) for this build.",
       "required": true,
-      "value": "0Mi"
+      "value": "64Mi"
     }
   ]
 }

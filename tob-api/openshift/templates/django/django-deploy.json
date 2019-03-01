@@ -512,7 +512,7 @@
       "displayName": "Route Path",
       "description": "The path with which to restrict access on the exposed route.",
       "required": false,
-      "value": "/api/v2/indy"
+      "value": "/api/v2"
     },
     {
       "name": "DATABASE_SERVICE_NAME",
@@ -754,7 +754,7 @@
       "displayName": "Application url",
       "description": "This service's url.",
       "required": true,
-      "value": "https://eao-inspections-evidence-locker-dev.pathfinder.gov.bc.ca/"
+      "value": "https://eao-inspections-evidence-locker-dev.pathfinder.gov.bc.ca"
     },
     {
       "name": "EMAIL_SETTINGS_STORE_NAME",
