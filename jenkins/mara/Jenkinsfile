@@ -11,7 +11,7 @@ def BUILD_CONFIG = APP_NAME
 def IMAGESTREAM_NAME = APP_NAME
 
 // You'll need to change this to point to your application component's folder within your repository
-def CONTEXT_DIRECTORY = 'starter-kit/agent/eao-pipeline'
+def CONTEXT_DIRECTORY = 'agent/eao-pipeline'
 
 @NonCPS
 boolean triggerBuild(String contextDirectory) {
