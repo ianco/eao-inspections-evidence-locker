@@ -512,7 +512,7 @@
       "displayName": "Route Path",
       "description": "The path with which to restrict access on the exposed route.",
       "required": false,
-      "value": "/api/v2/indy"
+      "value": "/api/v2"
     },
     {
       "name": "DATABASE_SERVICE_NAME",

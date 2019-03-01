@@ -7,7 +7,7 @@
 # APP_GROUP=tob
 # IMAGE_NAMESPACE=eao-iuc-tools
 APPLICATION_DOMAIN=eao-evidence-locker-api-prod.pathfinder.gov.bc.ca
-# ROUTE_PATH=/api/v2/indy
+# ROUTE_PATH=/api/v2
 # DATABASE_SERVICE_NAME=postgresql
 # DATABASE_ENGINE=postgresql
 # DATABASE_NAME=Evidence_Locker_Database
