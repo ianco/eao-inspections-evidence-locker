@@ -6,7 +6,7 @@
 # NAME=django
 # APP_GROUP=tob
 # IMAGE_NAMESPACE=eao-iuc-tools
-APPLICATION_DOMAIN=django-eao-iuc-prod.pathfinder.gov.bc.ca
+APPLICATION_DOMAIN=eao-evidence-locker-api-prod.pathfinder.gov.bc.ca
 # ROUTE_PATH=/api/v2/indy
 # DATABASE_SERVICE_NAME=postgresql
 # DATABASE_ENGINE=postgresql
