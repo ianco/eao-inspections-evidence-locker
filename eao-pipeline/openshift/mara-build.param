@@ -1,0 +1,15 @@
+#=========================================================
+# OpenShift template parameters for:
+# Component: eao-pipeline
+# Template File: templates/mara/mara-build.json
+#=========================================================
+NAME=mara
+GIT_REPO_URL=https://github.com/bcgov/eao-inspections-evidence-locker.git
+GIT_REF=master
+SOURCE_CONTEXT_DIR=starter-kit/agent/eao-pipeline
+OUTPUT_IMAGE_TAG=latest
+DOCKER_FILE_PATH=docker/mara-app/Dockerfile
+CPU_LIMIT=0
+MEMORY_LIMIT=0Mi
+CPU_REQUEST=0
+MEMORY_REQUEST=0Mi

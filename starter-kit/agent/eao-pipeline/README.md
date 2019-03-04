@@ -16,11 +16,11 @@ The documentation in this fork of the project describes how to install and run t
 
 The dependencies for the core framework are described in the root Mara project.  This project is setup to use Docker so it doesn't require local setup unless you want to run the application on your local host.
 
-Generated credentials are submitted using bcreg-x, a configured instance of VON-X, to TheOrgBook.  Currently the versions used are:
+Generated credentials are submitted using eao, a configured instance of VON-X, to TheOrgBook.  Currently the versions used are:
 
 * VON-Network = https://github.com/bcgov/von-network.git, branch master
 * TheOrgBook = https://github.com/nrempel/TheOrgBook.git, branch master
-* BCReg-X = https://github.com/bcgov/con-bc-registries-agent/bcreg-x, branch master
+* BCReg-X = https://github.com/bcgov/con-bc-registries-agent/eao, branch master
 
 ## Running the Event Processor using docker
 
@@ -56,7 +56,7 @@ No direct routes to the Mara Console are provisioned, on purpose, by the Mara de
 
 Example:
 ```
-oc port-forward mara-9-k9xpd 8080:8080 -n devex-von-bc-registries-agent-dev
+oc port-forward mara-9-k9xpd 8080:8080 -n eao-iuc-bc-registries-agent-dev
 ```
 
 ## Running Pipelines from the Command Line
@@ -98,9 +98,9 @@ BC_REG_DB_USER=<usr> BC_REG_DB_PASSWORD=<pwd> MARA_DB_HOST=localhost MARA_DB_POR
 
 ## Performing an Initial Data Load in OpenShift
 
-*The following configuration was found to provide the highest sustained throughput for posting credentials.*  *The bcreg-x-agent and mara pods have to be manually scaled because they do not have any resource limits set on which a horizontal autoscaler could operate.  The `tob-api` pods are configured with a horizontal autoscaler.*
+*The following configuration was found to provide the highest sustained throughput for posting credentials.*  *The eao-agent and mara pods have to be manually scaled because they do not have any resource limits set on which a horizontal autoscaler could operate.  The `tob-api` pods are configured with a horizontal autoscaler.*
 
-Scale the bcreg-x-agent deployment to 8 to 10 pods and make sure they have fully started.  When feeding into 5 `tob-api` pods, these 8 to 10 agent pods can provide a throughput of a little over 2,600 credentials per minute at best.  Increasing the number of pods on either side has little to no additional performance benefit.
+Scale the eao-agent deployment to 8 to 10 pods and make sure they have fully started.  When feeding into 5 `tob-api` pods, these 8 to 10 agent pods can provide a throughput of a little over 2,600 credentials per minute at best.  Increasing the number of pods on either side has little to no additional performance benefit.
 
 Scale the mara deployment to 2 pods.
 

@@ -75,7 +75,7 @@
       "displayName": "Source Context Directory",
       "description": "The source context directory.",
       "required": true,
-      "value": "credential-registry/docker/tob-web/nginx-runtime/"
+      "value": "credential-registry/client/docker/tob-web/nginx-runtime/"
     },
     {
       "name": "OUTPUT_IMAGE_TAG",

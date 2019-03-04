@@ -18,7 +18,7 @@
     proxy / {%AGENT_HOST%}:{%AGENT_PORT%} {
         except /assets
         
-        # Health Checks to `/health` pass through to the bcreg-x-agent
+        # Health Checks to `/health` pass through to the eao-agent
         # They will return 502 bad gateway if the agent is not synced or it is unavailable.
         
         transparent

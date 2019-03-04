@@ -110,7 +110,7 @@
       "displayName": "Runtime Image Namespace",
       "description": "The namespace containing the runtime image.",
       "required": false,
-      "value": "esm-tools"
+      "value": "eao-iuc-tools"
     },
     {
       "name": "RUNTIME_IMAGE_NAME",

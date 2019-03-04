@@ -29,7 +29,28 @@
         ],
         "runPolicy": "Serial",
         "source": {
-          "type": "Binary"
+          "type": "Git",
+          "contextDir": "${SOURCE_CONTEXT_DIR}",
+          "git": {
+            "uri": "${GIT_REPO_URL}",
+            "ref": "${GIT_REF}"
+          }
+        },
+        "strategy": {
+          "type": "Source",
+          "sourceStrategy": {
+            "from": {
+              "kind": "ImageStreamTag",
+              "namespace": "${SOURCE_IMAGE_NAMESPACE}",
+              "name": "${SOURCE_IMAGE_NAME}:${SOURCE_IMAGE_TAG}"
+            },
+            "env": [
+              {
+                "name": "TOB_THEME",
+                "value": "${TOB_THEME}"
+              }
+            ]
+          }
         },
         "output": {
           "to": {
@@ -64,6 +85,54 @@
       "description": "The tag given to the built image.",
       "required": true,
       "value": "latest"
+    },
+    {
+      "name": "GIT_REPO_URL",
+      "displayName": "GIT Source Repo URL",
+      "description": "A GIT URL to your source code.",
+      "required": true,
+      "value": "https://github.com/esune/eao-inspections-evidence-locker.git"
+    },
+    {
+      "name": "GIT_REF",
+      "displayName": "Git Reference",
+      "description": "The git reference or branch.",
+      "required": true,
+      "value": "master"
+    },
+    {
+      "name": "SOURCE_CONTEXT_DIR",
+      "displayName": "Source Context Directory",
+      "description": "The source context directory.",
+      "required": false,
+      "value": "credential-registry/client/tob-web"
+    },
+    {
+      "name": "SOURCE_IMAGE_NAMESPACE",
+      "displayName": "Source Image Namespace",
+      "description": "The namespace containing the source image.",
+      "required": true,
+      "value": "openshift"
+    },
+    {
+      "name": "SOURCE_IMAGE_NAME",
+      "displayName": "Source Image Name",
+      "description": "The name of the source image.",
+      "required": true,
+      "value": "nodejs"
+    },
+    {
+      "name": "SOURCE_IMAGE_TAG",
+      "displayName": "Source Image Tag",
+      "description": "The tag of the source image.",
+      "required": true,
+      "value": "8"
+    },
+    {
+      "name": "TOB_THEME",
+      "displayName": "TheOrgBook Theme Name",
+      "description": "The name of the theme to be used for the site.",
+      "value": "default"
     },
     {
       "name": "CPU_LIMIT",

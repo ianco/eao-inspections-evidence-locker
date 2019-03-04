@@ -9,14 +9,14 @@
       "iconClass": "icon-python"
     }
   },
-  "objects": [
-    {
+  "objects": [{
       "kind": "Secret",
       "apiVersion": "v1",
       "metadata": {
         "name": "${EMAIL_SETTINGS_STORE_NAME}",
         "labels": {
-          "app": "${NAME}",
+          "app": "evidence-locker",
+          "name": "${NAME}",
           "app-group": "${APP_GROUP}"
         }
       },
@@ -32,7 +32,8 @@
       "metadata": {
         "name": "${WALLET_CREDENTIAL_STORE_NAME}",
         "labels": {
-          "app": "${NAME}",
+          "app": "evidence-locker",
+          "name": "${NAME}",
           "app-group": "${APP_GROUP}"
         }
       },
@@ -49,7 +50,8 @@
       "metadata": {
         "name": "${NAME}",
         "labels": {
-          "app": "${NAME}",
+          "app": "evidence-locker",
+          "name": "${NAME}",
           "app-group": "${APP_GROUP}"
         }
       },
@@ -71,18 +73,17 @@
           "service.alpha.openshift.io/dependencies": "[{\"name\": \"${DATABASE_SERVICE_NAME}\", \"kind\": \"Service\"},{\"name\": \"${SOLR_SERVICE_NAME}\", \"kind\": \"Service\"}]"
         },
         "labels": {
-          "app": "${NAME}",
+          "app": "evidence-locker",
+          "name": "${NAME}",
           "app-group": "${APP_GROUP}"
         }
       },
       "spec": {
-        "ports": [
-          {
-            "name": "8080-tcp",
-            "port": 8080,
-            "targetPort": 8080
-          }
-        ],
+        "ports": [{
+          "name": "8080-tcp",
+          "port": 8080,
+          "targetPort": 8080
+        }],
         "selector": {
           "name": "${NAME}"
         }
@@ -94,7 +95,8 @@
       "metadata": {
         "name": "${NAME}",
         "labels": {
-          "app": "${NAME}",
+          "app": "evidence-locker",
+          "name": "${NAME}",
           "app-group": "${APP_GROUP}"
         }
       },
@@ -121,7 +123,8 @@
       "metadata": {
         "name": "${NAME}",
         "labels": {
-          "app": "${NAME}",
+          "app": "evidence-locker",
+          "name": "${NAME}",
           "template": "${NAME}-deployment-template",
           "app-group": "${APP_GROUP}"
         }
@@ -146,7 +149,8 @@
           "description": "Defines how to deploy the application server"
         },
         "labels": {
-          "app": "${NAME}",
+          "app": "evidence-locker",
+          "name": "${NAME}",
           "app-group": "${APP_GROUP}"
         }
       },
@@ -154,8 +158,7 @@
         "strategy": {
           "type": "Rolling"
         },
-        "triggers": [
-          {
+        "triggers": [{
             "type": "ImageChange",
             "imageChangeParams": {
               "automatic": true,
@@ -185,282 +188,273 @@
             }
           },
           "spec": {
-            "volumes": [
-              {
+            "volumes": [{
+              "name": "${NAME}-data",
+              "persistentVolumeClaim": {
+                "claimName": "${NAME}"
+              }
+            }],
+            "containers": [{
+              "name": "${NAME}",
+              "image": " ",
+              "ports": [{
+                "containerPort": 8080,
+                "protocol": "TCP"
+              }],
+              "readinessProbe": {
+                "failureThreshold": 5,
+                "periodSeconds": 30,
+                "initialDelaySeconds": 3,
+                "timeoutSeconds": 20,
+                "httpGet": {
+                  "path": "/health",
+                  "port": 8080
+                }
+              },
+              "livenessProbe": {
+                "failureThreshold": 5,
+                "periodSeconds": 60,
+                "initialDelaySeconds": 30,
+                "timeoutSeconds": 20,
+                "httpGet": {
+                  "path": "/health",
+                  "port": 8080
+                }
+              },
+              "volumeMounts": [{
                 "name": "${NAME}-data",
-                "persistentVolumeClaim": {
-                  "claimName": "${NAME}"
-                }
-              }
-            ],
-            "containers": [
-              {
-                "name": "${NAME}",
-                "image": " ",
-                "ports": [
-                  {
-                    "containerPort": 8080,
-                    "protocol": "TCP"
-                  }
-                ],
-                "readinessProbe": {
-                  "failureThreshold": 5,
-                  "periodSeconds": 30,
-                  "initialDelaySeconds": 3,
-                  "timeoutSeconds": 20,
-                  "httpGet": {
-                    "path": "/health",
-                    "port": 8080
+                "mountPath": "${MOUNT_PATH}"
+              }],
+              "env": [{
+                  "name": "DATABASE_SERVICE_NAME",
+                  "value": "${DATABASE_SERVICE_NAME}"
+                },
+                {
+                  "name": "DATABASE_ENGINE",
+                  "value": "${DATABASE_ENGINE}"
+                },
+                {
+                  "name": "DATABASE_NAME",
+                  "value": "${DATABASE_NAME}"
+                },
+                {
+                  "name": "DATABASE_USER",
+                  "valueFrom": {
+                    "secretKeyRef": {
+                      "name": "${DATABASE_DEPLOYMENT_NAME}",
+                      "key": "database-user"
+                    }
                   }
                 },
-                "livenessProbe": {
-                  "failureThreshold": 5,
-                  "periodSeconds": 60,
-                  "initialDelaySeconds": 30,
-                  "timeoutSeconds": 20,
-                  "httpGet": {
-                    "path": "/health",
-                    "port": 8080
+                {
+                  "name": "DATABASE_PASSWORD",
+                  "valueFrom": {
+                    "secretKeyRef": {
+                      "name": "${DATABASE_DEPLOYMENT_NAME}",
+                      "key": "database-password"
+                    }
                   }
                 },
-                "volumeMounts": [
-                  {
-                    "name": "${NAME}-data",
-                    "mountPath": "${MOUNT_PATH}"
+                {
+                  "name": "WALLET_TYPE",
+                  "value": "${WALLET_TYPE}"
+                },
+                {
+                  "name": "POSTGRESQL_WALLET_HOST",
+                  "value": "${POSTGRESQL_WALLET_HOST}"
+                },
+                {
+                  "name": "POSTGRESQL_WALLET_PORT",
+                  "value": "${POSTGRESQL_WALLET_PORT}"
+                },
+                {
+                  "name": "POSTGRESQL_WALLET_USER",
+                  "valueFrom": {
+                    "secretKeyRef": {
+                      "name": "${POSTGRESQL_WALLET_HOST}",
+                      "key": "database-user"
+                    }
                   }
-                ],
-                "env": [
-                  {
-                    "name": "DATABASE_SERVICE_NAME",
-                    "value": "${DATABASE_SERVICE_NAME}"
-                  },
-                  {
-                    "name": "DATABASE_ENGINE",
-                    "value": "${DATABASE_ENGINE}"
-                  },
-                  {
-                    "name": "DATABASE_NAME",
-                    "value": "${DATABASE_NAME}"
-                  },
-                  {
-                    "name": "DATABASE_USER",
-                    "valueFrom": {
-                      "secretKeyRef": {
-                        "name": "${DATABASE_DEPLOYMENT_NAME}",
-                        "key": "database-user"
-                      }
+                },
+                {
+                  "name": "POSTGRESQL_WALLET_PASSWORD",
+                  "valueFrom": {
+                    "secretKeyRef": {
+                      "name": "${POSTGRESQL_WALLET_HOST}",
+                      "key": "database-password"
                     }
-                  },
-                  {
-                    "name": "DATABASE_PASSWORD",
-                    "valueFrom": {
-                      "secretKeyRef": {
-                        "name": "${DATABASE_DEPLOYMENT_NAME}",
-                        "key": "database-password"
-                      }
-                    }
-                  },
-                  {
-                    "name": "WALLET_TYPE",
-                    "value": "${WALLET_TYPE}"
-                  },
-                  {
-                    "name": "POSTGRESQL_WALLET_HOST",
-                    "value": "${POSTGRESQL_WALLET_HOST}"
-                  },
-                  {
-                    "name": "POSTGRESQL_WALLET_PORT",
-                    "value": "${POSTGRESQL_WALLET_PORT}"
-                  },
-                  {
-                    "name": "POSTGRESQL_WALLET_USER",
-                    "valueFrom": {
-                      "secretKeyRef": {
-                        "name": "${POSTGRESQL_WALLET_HOST}",
-                        "key": "database-user"
-                      }
-                    }
-                  },
-                  {
-                    "name": "POSTGRESQL_WALLET_PASSWORD",
-                    "valueFrom": {
-                      "secretKeyRef": {
-                        "name": "${POSTGRESQL_WALLET_HOST}",
-                        "key": "database-password"
-                      }
-                    }
-                  },
-                  {
-                    "name": "POSTGRESQL_WALLET_ADMIN_PASSWORD",
-                    "valueFrom": {
-                      "secretKeyRef": {
-                        "name": "${POSTGRESQL_WALLET_HOST}",
-                        "key": "admin-password"
-                      }
-                    }
-                  },
-                  {
-                    "name": "WALLET_ENCRYPTION_KEY",
-                    "valueFrom": {
-                      "secretKeyRef": {
-                        "name": "${WALLET_CREDENTIAL_STORE_NAME}",
-                        "key": "key"
-                      }
-                    }
-                  },
-                  {
-                    "name": "INDY_WALLET_SEED",
-                    "valueFrom": {
-                      "secretKeyRef": {
-                        "name": "${WALLET_CREDENTIAL_STORE_NAME}",
-                        "key": "seed"
-                      }
-                    }
-                  },
-                  {
-                    "name": "INDY_WALLET_DID",
-                    "valueFrom": {
-                      "secretKeyRef": {
-                        "name": "${WALLET_CREDENTIAL_STORE_NAME}",
-                        "key": "did"
-                      }
-                    }
-                  },
-                  {
-                    "name": "APP_FILE",
-                    "value": "${APP_FILE}"
-                  },
-                  {
-                    "name": "APP_CONFIG",
-                    "value": "${APP_CONFIG}"
-                  },
-                  {
-                    "name": "DJANGO_SECRET_KEY",
-                    "value": "${DJANGO_SECRET_KEY}"
-                  },
-                  {
-                    "name": "DJANGO_DEBUG",
-                    "value": "${DJANGO_DEBUG}"
-                  },
-                  {
-                    "name": "SOLR_SERVICE_NAME",
-                    "value": "${SOLR_SERVICE_NAME}"
-                  },
-                  {
-                    "name": "SOLR_CORE_NAME",
-                    "value": "${SOLR_CORE_NAME}"
-                  },
-                  {
-                    "name": "SKIP_INDEXING_ON_STARTUP",
-                    "value": "${SKIP_INDEXING_ON_STARTUP}"
-                  },
-                  {
-                    "name": "ENABLE_REALTIME_INDEXING",
-                    "value": "${ENABLE_REALTIME_INDEXING}"
-                  },
-                  {
-                    "name": "ENABLE_SUGGESTER_REBUILD",
-                    "value": "${ENABLE_SUGGESTER_REBUILD}"
-                  },
-                  {
-                    "name": "GENESIS_URL",
-                    "value": "${GENESIS_URL}"
-                  },
-                  {
-                    "name": "LEDGER_URL",
-                    "value": "${LEDGER_URL}"
-                  },
-                  {
-                    "name": "LEDGER_PROTOCOL_VERSION",
-                    "value": "${LEDGER_PROTOCOL_VERSION}"
-                  },
-                  {
-                    "name": "AUTO_REGISTER_DID",
-                    "value": "${AUTO_REGISTER_DID}"
-                  },
-                  {
-                    "name": "USE_AUTHENTICATION",
-                    "value": "${USE_AUTHENTICATION}"
-                  },
-                  {
-                    "name": "USER_ID",
-                    "valueFrom": {
-                      "secretKeyRef": {
-                        "name": "${NAME}",
-                        "key": "api-user"
-                      }
-                    }
-                  },
-                  {
-                    "name": "USER_PASSWORD",
-                    "valueFrom": {
-                      "secretKeyRef": {
-                        "name": "${NAME}",
-                        "key": "api-password"
-                      }
-                    }
-                  },
-                  {
-                    "name": "ADMIN_USER_ID",
-                    "valueFrom": {
-                      "secretKeyRef": {
-                        "name": "${NAME}",
-                        "key": "admin-user"
-                      }
-                    }
-                  },
-                  {
-                    "name": "ADMIN_PASSWORD",
-                    "valueFrom": {
-                      "secretKeyRef": {
-                        "name": "${NAME}",
-                        "key": "admin-password"
-                      }
-                    }
-                  },
-                  {
-                    "name": "TOB_THEME",
-                    "value": "${TOB_THEME}"
-                  },
-                  {
-                    "name": "APPLICATION_URL",
-                    "value": "${APPLICATION_URL}"
-                  },
-                  {
-                    "name": "FEEDBACK_TARGET_EMAIL",
-                    "valueFrom": {
-                      "secretKeyRef": {
-                        "name": "${EMAIL_SETTINGS_STORE_NAME}",
-                        "key": "target-email"
-                      }
-                    }
-                  },
-                  {
-                    "name": "SMTP_SERVER_ADDRESS",
-                    "valueFrom": {
-                      "secretKeyRef": {
-                        "name": "${EMAIL_SETTINGS_STORE_NAME}",
-                        "key": "smtp-host"
-                      }
-                    }
-                  },
-                  {
-                    "name": "DEMO_SITE",
-                    "value": "${DEMO_SITE}"
                   }
-                ],
-                "resources": {
-                  "requests": {
-                    "cpu": "${CPU_REQUEST}",
-                    "memory": "${MEMORY_REQUEST}"
-                  },
-                  "limits": {
-                    "cpu": "${CPU_LIMIT}",
-                    "memory": "${MEMORY_LIMIT}"
+                },
+                {
+                  "name": "POSTGRESQL_WALLET_ADMIN_PASSWORD",
+                  "valueFrom": {
+                    "secretKeyRef": {
+                      "name": "${POSTGRESQL_WALLET_HOST}",
+                      "key": "admin-password"
+                    }
                   }
+                },
+                {
+                  "name": "WALLET_ENCRYPTION_KEY",
+                  "valueFrom": {
+                    "secretKeyRef": {
+                      "name": "${WALLET_CREDENTIAL_STORE_NAME}",
+                      "key": "key"
+                    }
+                  }
+                },
+                {
+                  "name": "INDY_WALLET_SEED",
+                  "valueFrom": {
+                    "secretKeyRef": {
+                      "name": "${WALLET_CREDENTIAL_STORE_NAME}",
+                      "key": "seed"
+                    }
+                  }
+                },
+                {
+                  "name": "INDY_WALLET_DID",
+                  "valueFrom": {
+                    "secretKeyRef": {
+                      "name": "${WALLET_CREDENTIAL_STORE_NAME}",
+                      "key": "did"
+                    }
+                  }
+                },
+                {
+                  "name": "APP_FILE",
+                  "value": "${APP_FILE}"
+                },
+                {
+                  "name": "APP_CONFIG",
+                  "value": "${APP_CONFIG}"
+                },
+                {
+                  "name": "DJANGO_SECRET_KEY",
+                  "value": "${DJANGO_SECRET_KEY}"
+                },
+                {
+                  "name": "DJANGO_DEBUG",
+                  "value": "${DJANGO_DEBUG}"
+                },
+                {
+                  "name": "SOLR_SERVICE_NAME",
+                  "value": "${SOLR_SERVICE_NAME}"
+                },
+                {
+                  "name": "SOLR_CORE_NAME",
+                  "value": "${SOLR_CORE_NAME}"
+                },
+                {
+                  "name": "SKIP_INDEXING_ON_STARTUP",
+                  "value": "${SKIP_INDEXING_ON_STARTUP}"
+                },
+                {
+                  "name": "ENABLE_REALTIME_INDEXING",
+                  "value": "${ENABLE_REALTIME_INDEXING}"
+                },
+                {
+                  "name": "ENABLE_SUGGESTER_REBUILD",
+                  "value": "${ENABLE_SUGGESTER_REBUILD}"
+                },
+                {
+                  "name": "GENESIS_URL",
+                  "value": "${GENESIS_URL}"
+                },
+                {
+                  "name": "LEDGER_URL",
+                  "value": "${LEDGER_URL}"
+                },
+                {
+                  "name": "LEDGER_PROTOCOL_VERSION",
+                  "value": "${LEDGER_PROTOCOL_VERSION}"
+                },
+                {
+                  "name": "AUTO_REGISTER_DID",
+                  "value": "${AUTO_REGISTER_DID}"
+                },
+                {
+                  "name": "USE_AUTHENTICATION",
+                  "value": "${USE_AUTHENTICATION}"
+                },
+                {
+                  "name": "USER_ID",
+                  "valueFrom": {
+                    "secretKeyRef": {
+                      "name": "${NAME}",
+                      "key": "api-user"
+                    }
+                  }
+                },
+                {
+                  "name": "USER_PASSWORD",
+                  "valueFrom": {
+                    "secretKeyRef": {
+                      "name": "${NAME}",
+                      "key": "api-password"
+                    }
+                  }
+                },
+                {
+                  "name": "ADMIN_USER_ID",
+                  "valueFrom": {
+                    "secretKeyRef": {
+                      "name": "${NAME}",
+                      "key": "admin-user"
+                    }
+                  }
+                },
+                {
+                  "name": "ADMIN_PASSWORD",
+                  "valueFrom": {
+                    "secretKeyRef": {
+                      "name": "${NAME}",
+                      "key": "admin-password"
+                    }
+                  }
+                },
+                {
+                  "name": "TOB_THEME",
+                  "value": "${TOB_THEME}"
+                },
+                {
+                  "name": "APPLICATION_URL",
+                  "value": "${APPLICATION_URL}"
+                },
+                {
+                  "name": "FEEDBACK_TARGET_EMAIL",
+                  "valueFrom": {
+                    "secretKeyRef": {
+                      "name": "${EMAIL_SETTINGS_STORE_NAME}",
+                      "key": "target-email"
+                    }
+                  }
+                },
+                {
+                  "name": "SMTP_SERVER_ADDRESS",
+                  "valueFrom": {
+                    "secretKeyRef": {
+                      "name": "${EMAIL_SETTINGS_STORE_NAME}",
+                      "key": "smtp-host"
+                    }
+                  }
+                },
+                {
+                  "name": "DEMO_SITE",
+                  "value": "${DEMO_SITE}"
+                }
+              ],
+              "resources": {
+                "requests": {
+                  "cpu": "${CPU_REQUEST}",
+                  "memory": "${MEMORY_REQUEST}"
+                },
+                "limits": {
+                  "cpu": "${CPU_LIMIT}",
+                  "memory": "${MEMORY_LIMIT}"
                 }
               }
-            ]
+            }]
           }
         }
       }
@@ -471,7 +465,8 @@
       "metadata": {
         "name": "${NAME}",
         "labels": {
-          "app": "${NAME}",
+          "app": "evidence-locker",
+          "name": "${NAME}",
           "app-group": "${APP_GROUP}"
         }
       },
@@ -485,8 +480,7 @@
       }
     }
   ],
-  "parameters": [
-    {
+  "parameters": [{
       "name": "NAME",
       "displayName": "Name",
       "description": "The name assigned to all of the OpenShift resources associated to the server instance.",
@@ -505,20 +499,20 @@
       "displayName": "Image Namespace",
       "required": true,
       "description": "The namespace of the OpenShift project containing the imagestream for the application.",
-      "value": "esm-tools"
+      "value": "eao-iuc-tools"
     },
     {
       "name": "APPLICATION_DOMAIN",
       "displayName": "Application Hostname",
       "description": "The exposed hostname that will route to the Django service, if left blank a value will be defaulted.",
-      "value": ""
+      "value": "django-eao-iuc-dev.pathfinder.gov.bc.ca"
     },
     {
       "name": "ROUTE_PATH",
       "displayName": "Route Path",
       "description": "The path with which to restrict access on the exposed route.",
       "required": false,
-      "value": "/api/v2/indy"
+      "value": "/api/v2"
     },
     {
       "name": "DATABASE_SERVICE_NAME",
@@ -591,7 +585,7 @@
       "displayName": "Wallet Credential Store Name",
       "description": "The name of the wallet credential store (aka The name of the secret that contains the wallet credentials).",
       "required": true,
-      "value": "wallet-credentials"
+      "value": "evidence-locker-wallet-credentials"
     },
     {
       "name": "APP_FILE",
@@ -758,9 +752,9 @@
     {
       "name": "APPLICATION_URL",
       "displayName": "Application url",
-      "description": "This service's url. If not specified, a value will be generated.",
-      "required": false,
-      "value": ""
+      "description": "This service's url.",
+      "required": true,
+      "value": "https://eao-inspections-evidence-locker-dev.pathfinder.gov.bc.ca"
     },
     {
       "name": "EMAIL_SETTINGS_STORE_NAME",
