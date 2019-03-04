@@ -36,27 +36,39 @@ issuers:
       issuer_url: $ENDPOINT_URL/eao-evidence-locker/inspection-site
       topic:
         source_id:
-          input: project_name
+          input: project_id
           from: claim
         type:
           input: registration
           from: value
       mapping:
-      - model: attribute
+      - model: name
         fields:
+        fields:
+          text:
+            input: project_name
+            from: claim
           type:
             input: project_name
             from: value
+      - model: attribute
+        fields:
+          type:
+            input: location
+            from: value
           value:
-            input: project_name
+            input: location
             from: claim
       - model: attribute
         fields:
           type:
-            input: location
+            input: entity_status
+            from: value
+          format:
+            input: category
             from: value
           value:
-            input: location
+            input: entity_status
             from: claim
 
     - description: The safety-inspection credential issued by EAO Evidence Locker
@@ -66,12 +78,13 @@ issuers:
       - registration
       topic:
         source_id:
-          input: project_name
+          input: project_id
           from: claim
         type:
           input: registration
           from: value
       cardinality_fields:
+      - project_id
       - inspection_id
       mapping:
       - model: attribute
@@ -96,10 +109,10 @@ issuers:
       - model: attribute
         fields:
           type:
-            input: project_name
+            input: project_id
             from: value
           value:
-            input: project_name
+            input: project_id
             from: claim
       - model: attribute
         fields:
@@ -137,14 +150,15 @@ issuers:
       - inspection
       topic:
         source_id:
-          input: project_name
+          input: project_id
           from: claim
         type:
           input: registration
           from: value
       cardinality_fields:
-      - - inspection_id
-        - document_id
+      - project_id
+      - inspection_id
+      - document_id
       mapping:
       - model: attribute
         fields:
@@ -160,10 +174,10 @@ issuers:
       - model: attribute
         fields:
           type:
-            input: project_name
+            input: project_id
             from: value
           value:
-            input: project_name
+            input: project_id
             from: claim
       - model: attribute
         fields:
@@ -227,7 +241,7 @@ proof_requests:
           name: inspection-site.eao-evidence-locker
           version: '1.0.0'
         attributes:
-          - project_name
+          - project_id
 
   inspection:
     version: '1.0.0'
@@ -237,7 +251,7 @@ proof_requests:
           name: safety-inspection.eao-evidence-locker
           version: '1.0.0'
         attributes:
-          - project_name
+          - project_id
           - inspection_id
 
 

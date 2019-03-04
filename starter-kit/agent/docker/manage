@@ -97,6 +97,13 @@ configureEnvironment () {
   export APPLICATION_URL=${APPLICATION_URL-http://localhost:${WEB_HTTP_PORT:-5000}}
   export ENDPOINT_URL=http://${ENDPOINT_HOST-$DOCKERHOST:${WEB_HTTP_PORT:-5001}}
 
+  # mongodb
+  export EAO_MDB_DB_HOST=${EAO_MDB_DB_HOST:-"mongo"}
+  export EAO_MDB_DB_PORT=${EAO_MDB_DB_PORT:-27017}
+  export EAO_MDB_DB_DATABASE=${EAO_MDB_DB_DATABASE:-"eao_db"}
+  export EAO_MDB_DB_USER=${EAO_MDB_DB_USER:-"root"}
+  export EAO_MDB_DB_PASSWORD=${EAO_MDB_DB_PASSWORD:-"example"}
+
   # wallet-db
   export POSTGRESQL_DATABASE="THE_ORG_BOOK"
   export POSTGRESQL_USER="DB_USER"

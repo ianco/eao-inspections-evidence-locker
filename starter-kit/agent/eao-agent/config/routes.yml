@@ -20,7 +20,13 @@ forms:
       type: text
       required: true
     mappings:
-      attributes: []
+      attributes: 
+        - name: project_id
+          from: helper
+          source: uuid
+        - name: status
+          from: literal
+          source: ACT
 
   eao-evidence-lockersafety-inspection:
     path: /eao-evidence-locker/safety-inspection
