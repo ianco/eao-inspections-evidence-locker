@@ -29,7 +29,7 @@ obsvn_credential = 'OBSVN'
 obsvn_schema = 'inspection-document.eao-evidence-locker'
 obsvn_version = '1.0.0'
 
-MDB_COLLECTIONS = ['inspections','observations','audios','photos','videos']
+MDB_COLLECTIONS = ['Inspection','Observation','Audio','Photo','Video']
 
 CORP_BATCH_SIZE = 3000
 
@@ -98,7 +98,7 @@ class EventProcessor:
             self.conn = psycopg2.connect(**params)
 
             mdb_config = config(section='eao_data')
-            self.mdb_client = MongoClient('mongodb://%s:%s@%s:%s' % (mdb_config['user'], mdb_config['password'], mdb_config['host'], mdb_config['port']))
+            self.mdb_client = MongoClient('mongodb://%s:%s@%s:%s/%s' % (mdb_config['user'], mdb_config['password'], mdb_config['host'], mdb_config['port'], mdb_config['database']))
             self.mdb_db = self.mdb_client[mdb_config['database']]
         except (Exception) as error:
             print(error)
@@ -490,9 +490,9 @@ class EventProcessor:
         inspection_cred = {}
         inspection_cred['project_id'] = site['PROJECT_ID']
         inspection_cred['inspection_id'] = mdb_inspection['_id']
-        inspection_cred['created_date'] = mdb_inspection['createdAt']
-        inspection_cred['updated_date'] = mdb_inspection['updatedAt']
-        inspection_cred['hash_value'] = mdb_inspection['uploadedHash']
+        inspection_cred['created_date'] = mdb_inspection['_created_at']
+        inspection_cred['updated_date'] = mdb_inspection['_updated_at']
+        inspection_cred['hash_value'] = mdb_inspection['_uploaded_hash'] if '_uploaded_hash' in mdb_inspection else None
 
         return self.build_credential_dict(inspc_credential, inspc_schema, inspc_version, 
                                           str(inspection_cred['project_id']) +':' + str(inspection_cred['inspection_id']), 
@@ -501,16 +501,16 @@ class EventProcessor:
 
     # get all inspection info from mongo db
     def fetch_mdb_inspection(self, site, inspection):
-        mdb_inspection = self.mdb_db['inspections'].find_one( {'_id' : inspection['OBJECT_ID']} )
-        mdb_observations = self.mdb_db['observations'].find( {'inspectionId' : inspection['OBJECT_ID']} )
+        mdb_inspection = self.mdb_db['Inspection'].find_one( {'_id' : inspection['OBJECT_ID']} )
+        mdb_observations = self.mdb_db['Observation'].find( {'inspectionId' : inspection['OBJECT_ID']} )
         for mdb_observation in mdb_observations:
-            mdb_audios = self.mdb_db['audios'].find_one( {'observationId' : mdb_observation['_id']} )
-            mdb_photos = self.mdb_db['photos'].find_one( {'observationId' : mdb_observation['_id']} )
-            mdb_videos = self.mdb_db['videos'].find_one( {'observationId' : mdb_observation['_id']} )
-            mdb_observation['audios'] = mdb_audios
-            mdb_observation['photos'] = mdb_photos
-            mdb_observation['videos'] = mdb_videos
-        mdb_inspection['observations'] = mdb_observations
+            mdb_audios = self.mdb_db['Audio'].find_one( {'observationId' : mdb_observation['_id']} )
+            mdb_photos = self.mdb_db['Photo'].find_one( {'observationId' : mdb_observation['_id']} )
+            mdb_videos = self.mdb_db['Video'].find_one( {'observationId' : mdb_observation['_id']} )
+            mdb_observation['Audio'] = mdb_audios
+            mdb_observation['Photo'] = mdb_photos
+            mdb_observation['Video'] = mdb_videos
+        mdb_inspection['Observation'] = mdb_observations
 
         return mdb_inspection
 
@@ -577,43 +577,45 @@ class EventProcessor:
 
     # derive a project id from a name (determanistic)
     def project_name_to_id(self, project_name):
-        # in test data, all project names start with 'SITE'
-        subname = project_name[5:]
         # first 10 non-space chars
-        subname = subname.strip()
-        return subname[:10]
+        subname = "".join(project_name.split()).upper()
+        if 12 >= len(subname):
+            return subname
+        return subname[:12]
+
 
     # find all un-processed objects in mongo db
     def find_unprocessed_objects(self):
         unprocessed_objects = []
         for collection in MDB_COLLECTIONS:
             # return if evlocker_date is missing or null
-            unprocesseds = self.mdb_db[collection].find( { 'evlocker_date' : None } );
+            unprocesseds = self.mdb_db[collection].find( { 'evlocker_date' : { "$exists" : False } } );
             for unprocessed in unprocesseds:
                 todo_obj = {}
                 todo_obj['SYSTEM_TYPE_CD'] = system_type
-                if collection == 'inspections':
+                if collection == 'Inspection':
                     todo_obj['PROJECT_ID'] = self.project_name_to_id(unprocessed['project'])
                     todo_obj['PROJECT_NAME'] = unprocessed['project']
-                elif collection == 'observations':
+                elif collection == 'Observation':
                     todo_obj['observationId'] = unprocessed['_id']
                 else:
-                    todo_obj['observationId'] = unprocessed['observationId']
-                if collection != 'inspections':
-                    todo_obj['inspectionId'] = unprocessed['inspectionId']
+                    todo_obj['observationId'] = unprocessed['observationId'] if 'observationId' in unprocessed else None
+                if collection != 'Inspection':
+                    todo_obj['inspectionId'] = unprocessed['inspectionId'] if 'inspectionId' in unprocessed else None
                 todo_obj['COLLECTION_TYPE'] = collection
                 todo_obj['OBJECT_ID'] = unprocessed['_id']
-                todo_obj['OBJECT_DATE'] = unprocessed['updatedAt']
-                todo_obj['UPLOAD_DATE'] = unprocessed['uploadedAt']
-                todo_obj['UPLOAD_HASH'] = unprocessed['uploadedHash']
+                todo_obj['OBJECT_DATE'] = unprocessed['_updated_at']
+                todo_obj['UPLOAD_DATE'] = unprocessed['_uploaded_at'] if '_uploaded_at' in unprocessed else None
+                todo_obj['UPLOAD_HASH'] = unprocessed['_uploaded_hash'] if '_uploaded_hash' in unprocessed else None
                 unprocessed_objects.append(todo_obj)
 
         # fill in project info for all items
         for unprocessed_object in unprocessed_objects:
-            if unprocessed_object['COLLECTION_TYPE'] != 'inspections':
-                inspection = self.mdb_db['inspections'].find_one( { '_id' : unprocessed_object['inspectionId'] } );
-                unprocessed_object['PROJECT_ID'] = inspection['project']
-                unprocessed_object['PROJECT_NAME'] = inspection['project']
+            if unprocessed_object['COLLECTION_TYPE'] != 'Inspection' and 'inspectionId' in unprocessed_object:
+                inspection = self.mdb_db['Inspection'].find_one( { '_id' : unprocessed_object['inspectionId'] } );
+                if inspection is not None:
+                    unprocessed_object['PROJECT_ID'] = inspection['project']
+                    unprocessed_object['PROJECT_NAME'] = inspection['project']
 
         return unprocessed_objects
 
@@ -621,57 +623,61 @@ class EventProcessor:
     def organize_unprocessed_objects(self, mongo_rows):
         organized_objects = {}
         for row in mongo_rows:
-            if row['PROJECT_ID'] in organized_objects:
-                site_object = organized_objects[row['PROJECT_ID']]
-            else:
-                site_object = {}
-                site_object['PROJECT_ID'] = row['PROJECT_ID']
-                site_object['PROJECT_NAME'] = row['PROJECT_NAME']
-                site_object['inspections'] = {}
-            organized_objects[row['PROJECT_ID']] = site_object
-
-            if row['COLLECTION_TYPE'] == 'inspections':
-                inspection_id = row['OBJECT_ID']
-            else:
-                inspection_id = row['inspectionId']
-
-            if inspection_id in site_object['inspections']:
-                inspct_object = site_object['inspections'][row['inspectionId']]
-            else:
-                inspct_object = {}
-                inspct_object['OBJECT_ID'] = inspection_id
-                inspct_object['observations'] = {}
-            if row['COLLECTION_TYPE'] == 'inspections':
-                inspct_object['inspection'] = row
-            site_object['inspections'][inspection_id] = inspct_object
-
-            if row['COLLECTION_TYPE'] != 'inspections':
-                if row['COLLECTION_TYPE'] == 'observations':
-                    observation_id = row['OBJECT_ID']
+            if 'PROJECT_ID' in row:
+                if row['PROJECT_ID'] in organized_objects:
+                    site_object = organized_objects[row['PROJECT_ID']]
                 else:
-                    observation_id = row['observationId']
+                    site_object = {}
+                    site_object['PROJECT_ID'] = row['PROJECT_ID']
+                    site_object['PROJECT_NAME'] = row['PROJECT_NAME']
+                    site_object['inspections'] = {}
+                organized_objects[row['PROJECT_ID']] = site_object
 
-                if observation_id in inspct_object['observations']:
-                    obsrv_object = inspct_object['observations'][observation_id]
+                if row['COLLECTION_TYPE'] == 'Inspection':
+                    inspection_id = row['OBJECT_ID']
+                elif 'inspectionId' in row:
+                    inspection_id = row['inspectionId']
                 else:
-                    obsrv_object = {}
-                    obsrv_object['OBJECT_ID'] = observation_id
-                    obsrv_object['audios'] = {}
-                    obsrv_object['photos'] = {}
-                    obsrv_object['videos'] = {}
-                if row['COLLECTION_TYPE'] == 'observations':
-                    obsrv_object['observation'] = row
-                inspct_object['observations'][observation_id] = obsrv_object
+                    inspection_id = None
 
-                if row['COLLECTION_TYPE'] != 'observations':
-                    if row['OBJECT_ID'] in obsrv_object[row['COLLECTION_TYPE']]:
-                        media_object = obsrv_object[row['COLLECTION_TYPE']][row['OBJECT_ID']]
+                if inspection_id is not None:
+                    if inspection_id in site_object['inspections']:
+                        inspct_object = site_object['inspections'][inspection_id]
                     else:
-                        media_object = {}
-                        media_object['OBJECT_ID'] = row['OBJECT_ID']
-                        media_object['media_type'] = row['COLLECTION_TYPE']
-                    media_object['media'] = row
-                    obsrv_object[row['COLLECTION_TYPE']][row['OBJECT_ID']] = media_object
+                        inspct_object = {}
+                        inspct_object['OBJECT_ID'] = inspection_id
+                        inspct_object['observations'] = {}
+                    if row['COLLECTION_TYPE'] == 'Inspection':
+                        inspct_object['inspection'] = row
+                    site_object['inspections'][inspection_id] = inspct_object
+
+                    if row['COLLECTION_TYPE'] != 'Inspection':
+                        if row['COLLECTION_TYPE'] == 'Observation':
+                            observation_id = row['OBJECT_ID']
+                        else:
+                            observation_id = row['observationId']
+
+                        if observation_id in inspct_object['observations']:
+                            obsrv_object = inspct_object['observations'][observation_id]
+                        else:
+                            obsrv_object = {}
+                            obsrv_object['OBJECT_ID'] = observation_id
+                            obsrv_object['audios'] = {}
+                            obsrv_object['photos'] = {}
+                            obsrv_object['videos'] = {}
+                        if row['COLLECTION_TYPE'] == 'Observation':
+                            obsrv_object['observation'] = row
+                        inspct_object['observations'][observation_id] = obsrv_object
+
+                        if row['COLLECTION_TYPE'] != 'Observation':
+                            if row['OBJECT_ID'] in obsrv_object[row['COLLECTION_TYPE']]:
+                                media_object = obsrv_object[row['COLLECTION_TYPE']][row['OBJECT_ID']]
+                            else:
+                                media_object = {}
+                                media_object['OBJECT_ID'] = row['OBJECT_ID']
+                                media_object['media_type'] = row['COLLECTION_TYPE']
+                            media_object['media'] = row
+                            obsrv_object[row['COLLECTION_TYPE']][row['OBJECT_ID']] = media_object
 
         return organized_objects
 

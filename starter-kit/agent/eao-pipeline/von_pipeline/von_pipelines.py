@@ -23,6 +23,7 @@ def von_root_pipeline():
         description = 'Holder for test and demo tasks.')
 
     test_pipeline.add(von_data_test_registrations())
+    test_pipeline.add(von_list_mongo_data())
 
     parent_pipeline.add(test_pipeline)
 
@@ -82,5 +83,17 @@ def von_data_test_registrations():
 
     pipeline.add(Task(id='register_test_corps', description='Register some test corps for processing',
                         commands=[ExecutePython('./von_pipeline/find-test-corps.py')]))
+
+    return pipeline
+
+def von_list_mongo_data():
+    import von_pipeline
+
+    pipeline = Pipeline(
+        id='von_list_mongo_data',
+        description='A pipeline that lists data in mongodb.')
+
+    pipeline.add(Task(id='list_mongo_data', description='List data queued for processing',
+                        commands=[ExecutePython('./von_pipeline/list_mongo_data.py')]))
 
     return pipeline
