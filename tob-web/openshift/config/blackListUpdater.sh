@@ -3,7 +3,7 @@
 # - Override using script options
 # -----------------------------------------------------------------------------------------------------------------
 queryPattern=${queryPattern:-"api\/search\/credential\/topic?name="}
-projectNamespace=${projectNamespace:-esm-bc-tob-prod}
+projectNamespace=${projectNamespace:-eao-iuc-bc-tob-prod}
 appName=${appName:-angular-on-nginx}
 blacklistRaw=${blacklistRaw:-blacklist.raw}
 blacklistConf=${blacklistConf:-blacklist.conf}
@@ -91,7 +91,7 @@ buildBlacklist (){
 
 dumpLogs() {
   (
-    projectNamespace=${1:-esm-bc-tob-prod}
+    projectNamespace=${1:-eao-iuc-bc-tob-prod}
     appName=${2:-angular-on-nginx}
     blacklistRaw=${3:-blacklist.raw}
 

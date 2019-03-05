@@ -1,3 +1,11 @@
+# See http://help.github.com/ignore-files/ for more about ignoring files.
+*_DeploymentConfig.json
+*_BuildConfig.json
+genesis
+
+/prototypes
+*.local.*
+
 ###
 ### Python
 ###

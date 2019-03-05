@@ -1,0 +1,11 @@
+#=========================================================
+# OpenShift template parameters for:
+# Component: tob-api
+# Template File: templates/von-image-ext/von-image-ext-build.json
+#=========================================================
+NAME=von-image-ext
+GIT_REPO_URL=https://github.com/bcgov/eao-inspections-evidence-locker.git
+GIT_REF=master
+SOURCE_CONTEXT_DIR=credential-registry/server
+OUTPUT_IMAGE_TAG=latest
+DOCKER_FILE_PATH=docker/von-image-ext/Dockerfile

@@ -1,0 +1,13 @@
+#=========================================================
+# OpenShift template parameters for:
+# Component: tob-solr
+# Template File: templates/solr-build.json
+#=========================================================
+NAME=solr
+GIT_REPO_URL=https://github.com/bcgov/eao-inspections-evidence-locker.git
+GIT_REF=master
+SOURCE_CONTEXT_DIR=starter-kit/credential-registry/server/tob-solr/cores
+SOURCE_IMAGE_NAME=solr-base
+SOURCE_IMAGE_TAG=latest
+SOURCE_IMAGE_NAMESPACE=eao-iuc-tools
+OUTPUT_IMAGE_TAG=latest

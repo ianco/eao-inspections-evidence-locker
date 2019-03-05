@@ -8,14 +8,14 @@
       "tags": "schema-spy"
     }
   },
-  "objects": [
-    {
+  "objects": [{
       "kind": "Secret",
       "apiVersion": "v1",
       "metadata": {
         "name": "${NAME}",
         "labels": {
-          "app": "${NAME}",          
+          "app": "evidence-locker-tools",
+          "name": "${NAME}",
           "app-group": "${APP_GROUP}"
         }
       },
@@ -30,19 +30,22 @@
       "apiVersion": "v1",
       "metadata": {
         "name": "${NAME}",
+        "labels": {
+          "app": "evidence-locker-tools",
+          "name": "${NAME}",
+          "app-group": "${APP_GROUP}"
+        },
         "annotations": {
           "description": "Exposes and load balances the application pods"
         }
       },
       "spec": {
-        "ports": [
-          {
-            "name": "8080-tcp",
-            "protocol": "TCP",
-            "port": 8080,
-            "targetPort": 8080
-          }
-        ],
+        "ports": [{
+          "name": "8080-tcp",
+          "protocol": "TCP",
+          "port": 8080,
+          "targetPort": 8080
+        }],
         "selector": {
           "name": "${NAME}"
         }
@@ -54,12 +57,13 @@
       "metadata": {
         "name": "${NAME}",
         "labels": {
-          "app": "${NAME}",          
+          "app": "evidence-locker-tools",
+          "name": "${NAME}",
           "app-group": "${APP_GROUP}"
         }
       },
       "spec": {
-        "host": "${NAME}-${APPLICATION_DOMAIN}",
+        "host": "${APPLICATION_DOMAIN}",
         "tls": {
           "insecureEdgeTerminationPolicy": "Redirect",
           "termination": "edge"
@@ -79,7 +83,8 @@
           "description": "Defines how to deploy the container."
         },
         "labels": {
-          "app": "${NAME}",          
+          "app": "evidence-locker-tools",
+          "name": "${NAME}",
           "app-group": "${APP_GROUP}"
         }
       },
@@ -94,8 +99,7 @@
             "maxSurge": "25%"
           }
         },
-        "triggers": [
-          {
+        "triggers": [{
             "type": "ConfigChange"
           },
           {
@@ -121,126 +125,115 @@
           "metadata": {
             "name": "${NAME}",
             "labels": {
+              "app": "evidence-locker-tools",
               "name": "${NAME}"
             }
           },
           "spec": {
-            "containers": [
-              {
-                "name": "${NAME}",
-                "image": " ",
-                "ports": [
-                  {
-                    "containerPort": 8080,
-                    "protocol": "TCP"
-                  }
-                ],
-                "env": [
-                  {
-                    "name": "DATABASE_SERVICE_NAME",
-                    "value": "${DATABASE_SERVICE_NAME}"
-                  },
-                  {
-                    "name": "POSTGRESQL_DATABASE",
-                    "value": "${DATABASE_NAME}"
-                  },
-                  {
-                    "name": "POSTGRESQL_USER",
-                    "valueFrom": {
-                      "secretKeyRef": {
-                        "name": "${DATABASE_DEPLOYMENT_NAME}",
-                        "key": "database-user"
-                      }
+            "containers": [{
+              "name": "${NAME}",
+              "image": " ",
+              "ports": [{
+                "containerPort": 8080,
+                "protocol": "TCP"
+              }],
+              "env": [{
+                  "name": "DATABASE_SERVICE_NAME",
+                  "value": "${DATABASE_SERVICE_NAME}"
+                },
+                {
+                  "name": "POSTGRESQL_DATABASE",
+                  "value": "${DATABASE_NAME}"
+                },
+                {
+                  "name": "POSTGRESQL_USER",
+                  "valueFrom": {
+                    "secretKeyRef": {
+                      "name": "${DATABASE_DEPLOYMENT_NAME}",
+                      "key": "database-user"
                     }
-                  },
-                  {
-                    "name": "POSTGRESQL_PASSWORD",
-                    "valueFrom": {
-                      "secretKeyRef": {
-                        "name": "${DATABASE_DEPLOYMENT_NAME}",
-                        "key": "database-password"
-                      }
-                    }
-                  },
-                  {
-                    "name": "SCHEMASPY_USER",
-                    "valueFrom": {
-                      "secretKeyRef": {
-                        "name": "${NAME}",
-                        "key": "user"
-                      }
-                    }
-                  },
-                  {
-                    "name": "SCHEMASPY_PASSWORD",
-                    "valueFrom": {
-                      "secretKeyRef": {
-                        "name": "${NAME}",
-                        "key": "password"
-                      }
-                    }
-                  },
-                  {
-                    "name": "OUTPUT_PATH",
-                    "value": "${OUTPUT_PATH}"
-                  }
-                ],
-                "readinessProbe": {
-                  "timeoutSeconds": 30,
-                  "initialDelaySeconds": 3,
-                  "httpGet": {
-                    "path": "/health",
-                    "port": 8080
                   }
                 },
-                "livenessProbe": {
-                  "timeoutSeconds": 30,
-                  "initialDelaySeconds": 300,
-                  "httpGet": {
-                    "path": "/health",
-                    "port": 8080
-                  }
-                },
-                "resources": {
-                  "requests": {
-                    "cpu": "${CPU_REQUEST}",
-                    "memory": "${MEMORY_REQUEST}"
-                  },
-                  "limits": {
-                    "cpu": "${CPU_LIMIT}",
-                    "memory": "${MEMORY_LIMIT}"
-                  }
-                },
-                "volumeMounts": [
-                  {
-                    "name": "${NAME}-config-volume",
-                    "mountPath": "${CONFIG_MOUNT_PATH}${CONFIG_FILE_NAME}",
-                    "subPath": "${CONFIG_FILE_NAME}"
-                  }
-                ]
-              }
-            ],
-            "volumes": [
-              {
-                "name": "${NAME}-config-volume",
-                "configMap": {
-                  "name": "${CONFIG_MAP_NAME}",
-                  "items": [
-                    {
-                      "key": "${CONFIG_FILE_NAME}",
-                      "path": "${CONFIG_FILE_NAME}"
+                {
+                  "name": "POSTGRESQL_PASSWORD",
+                  "valueFrom": {
+                    "secretKeyRef": {
+                      "name": "${DATABASE_DEPLOYMENT_NAME}",
+                      "key": "database-password"
                     }
-                  ]
+                  }
+                },
+                {
+                  "name": "SCHEMASPY_USER",
+                  "valueFrom": {
+                    "secretKeyRef": {
+                      "name": "${NAME}",
+                      "key": "user"
+                    }
+                  }
+                },
+                {
+                  "name": "SCHEMASPY_PASSWORD",
+                  "valueFrom": {
+                    "secretKeyRef": {
+                      "name": "${NAME}",
+                      "key": "password"
+                    }
+                  }
+                },
+                {
+                  "name": "OUTPUT_PATH",
+                  "value": "${OUTPUT_PATH}"
                 }
+              ],
+              "readinessProbe": {
+                "timeoutSeconds": 30,
+                "initialDelaySeconds": 3,
+                "httpGet": {
+                  "path": "/health",
+                  "port": 8080
+                }
+              },
+              "livenessProbe": {
+                "timeoutSeconds": 30,
+                "initialDelaySeconds": 300,
+                "httpGet": {
+                  "path": "/health",
+                  "port": 8080
+                }
+              },
+              "resources": {
+                "requests": {
+                  "cpu": "${CPU_REQUEST}",
+                  "memory": "${MEMORY_REQUEST}"
+                },
+                "limits": {
+                  "cpu": "${CPU_LIMIT}",
+                  "memory": "${MEMORY_LIMIT}"
+                }
+              },
+              "volumeMounts": [{
+                "name": "${NAME}-config-volume",
+                "mountPath": "${CONFIG_MOUNT_PATH}${CONFIG_FILE_NAME}",
+                "subPath": "${CONFIG_FILE_NAME}"
+              }]
+            }],
+            "volumes": [{
+              "name": "${NAME}-config-volume",
+              "configMap": {
+                "name": "${CONFIG_MAP_NAME}",
+                "items": [{
+                  "key": "${CONFIG_FILE_NAME}",
+                  "path": "${CONFIG_FILE_NAME}"
+                }]
               }
-            ]
+            }]
           }
         }
       }
     }
   ],
-  "parameters": [
-    {
+  "parameters": [{
       "name": "NAME",
       "displayName": "Schema Spy Name",
       "description": "The name assigned to all of the schema spy objects defined in this template.",
@@ -259,7 +252,7 @@
       "displayName": "Image Namespace",
       "required": true,
       "description": "The namespace of the OpenShift project containing the imagestream for the application.",
-      "value": "esm-tools"
+      "value": "eao-iuc-tools"
     },
     {
       "name": "APPLICATION_DOMAIN",
@@ -343,28 +336,28 @@
       "displayName": "Resources CPU Request",
       "description": "The resources CPU request (in cores) for this build.",
       "required": true,
-      "value": "0m"
+      "value": "250m"
     },
     {
       "name": "CPU_LIMIT",
       "displayName": "Resources CPU Limit",
       "description": "The resources CPU limit (in cores) for this build.",
       "required": true,
-      "value": "0m"
+      "value": "500m"
     },
     {
       "name": "MEMORY_REQUEST",
       "displayName": "Resources Memory Request",
       "description": "The resources Memory request (in Mi, Gi, etc) for this build.",
       "required": true,
-      "value": "0Mi"
+      "value": "512Mi"
     },
     {
       "name": "MEMORY_LIMIT",
       "displayName": "Resources Memory Limit",
       "description": "The resources Memory limit (in Mi, Gi, etc) for this build.",
       "required": true,
-      "value": "0Mi"
+      "value": "1Gi"
     }
   ]
 }
