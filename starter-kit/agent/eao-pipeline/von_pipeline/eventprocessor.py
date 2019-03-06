@@ -15,7 +15,7 @@ import traceback
 from von_pipeline.config import config
 
 
-system_type = 'EAO_EL'
+EAO_SYSTEM_TYPE = 'EAO_EL'
 
 site_credential = 'SITE'
 site_schema = 'inspection-site.eao-evidence-locker'
@@ -30,6 +30,7 @@ obsvn_schema = 'inspection-document.eao-evidence-locker'
 obsvn_version = '1.0.0'
 
 MDB_COLLECTIONS = ['Inspection','Observation','Audio','Photo','Video']
+MDB_OBJECT_DATE = '_updated_at'
 
 CORP_BATCH_SIZE = 3000
 
@@ -425,7 +426,7 @@ class EventProcessor:
 
 
     # find an (existing) credential for the site
-    def find_site_credential(self, site):
+    def find_site_credential(self, system_type, site):
         cur = None
         try:
             cur = self.conn.cursor()
@@ -504,24 +505,27 @@ class EventProcessor:
                     inspection = site['inspections'][inspection_id]
                     i_d = inspection['inspection']
 
+                    # record the fact that we have processed this Inspection
                     if save_to_db:
-                        inspection_rec_id = self.insert_inspection_history(cur, system_type, 'Inspection', i_d['PROJECT_ID'], i_d['PROJECT_NAME'], i_d['OBJECT_ID'], i_d['OBJECT_DATE'], i_d['UPLOAD_DATE'], i_d['UPLOAD_HASH'])
+                        inspection_rec_id = self.insert_inspection_history(cur, EAO_SYSTEM_TYPE, 'Inspection', i_d['PROJECT_ID'], i_d['PROJECT_NAME'], i_d['OBJECT_ID'], i_d['OBJECT_DATE'], i_d['UPLOAD_DATE'], i_d['UPLOAD_HASH'])
 
                     # issue foundational credential / only if we don't have one yet
-                    site_cred = self.find_site_credential(site)
+                    site_cred = self.find_site_credential(EAO_SYSTEM_TYPE, site)
                     if site_cred is None:
                         site_cred = self.generate_site_credential(site)
                         if save_to_db:
-                            self.store_credentials(cur, system_type, site_cred, 'Inspection', inspection_rec_id, i_d['PROJECT_ID'], i_d['PROJECT_NAME'])
+                            self.store_credentials(cur, EAO_SYSTEM_TYPE, site_cred, 'Inspection', inspection_rec_id, i_d['PROJECT_ID'], i_d['PROJECT_NAME'])
                         creds.append(site_cred)
 
-                    # fetch inspection report and issue credential
+                    # fetch inspection report from mongodb (including observations and media) and issue credential
                     mdb_inspection = self.fetch_mdb_inspection(site, inspection)
                     cred = self.generate_inspection_credential(site, inspection, mdb_inspection)
                     if save_to_db:
-                        self.store_credentials(cur, system_type, cred, 'Inspection', inspection_rec_id, i_d['PROJECT_ID'], i_d['PROJECT_NAME'])
+                        self.store_credentials(cur, EAO_SYSTEM_TYPE, cred, 'Inspection', inspection_rec_id, i_d['PROJECT_ID'], i_d['PROJECT_NAME'])
                     creds.append(cred)
-                    max_dates['Inspection'] = self.max_collection_date(max_dates, 'Inspection', mdb_inspection['_updated_at'])
+
+                    # save max inspection date
+                    max_dates['Inspection'] = self.max_collection_date(max_dates, 'Inspection', mdb_inspection[MDB_OBJECT_DATE])
 
                     # hash of observations:
                     for observation_id in inspection['observations']:
@@ -549,7 +553,7 @@ class EventProcessor:
             # record max dates processed
             if save_to_db:
                 for collection in max_dates:
-                    self.insert_processed_event(system_type, collection, max_dates[collection])
+                    self.insert_processed_event(EAO_SYSTEM_TYPE, collection, max_dates[collection])
                 
             return creds
         except (Exception, psycopg2.DatabaseError) as error:
@@ -571,25 +575,27 @@ class EventProcessor:
 
 
     # find all un-processed objects in mongo db
+    # TODO this currently fetches Inspections only (assumes any updates will include an update to the Inspection)
     def find_unprocessed_objects(self):
         unprocessed_objects = []
 
         # TODO for now just look at the Investigations collection ...
+        # TODO if necessary fetch other collections as well
         for collection in [MDB_COLLECTIONS[0],]:
             # find last processed date for this collection
-            last_event = self.get_last_processed_event(system_type, collection)
+            last_event = self.get_last_processed_event(EAO_SYSTEM_TYPE, collection)
 
             # return if evlocker_date is missing or null
             if last_event is None:
-                unprocesseds = self.mdb_db[collection].find( { 'evlocker_date' : { "$exists" : False } } )
+                unprocesseds = self.mdb_db[collection].find( { 'evlocker_date' : { "$exists" : False } } ).sort(MDB_OBJECT_DATE, pymongo.ASCENDING)
             else:
                 last_date = last_event['OBJECT_DATE']
-                unprocesseds = self.mdb_db[collection].find( {'$and': [{'evlocker_date': {"$exists": False}}, {'_updated_at': {"$gt": last_date}}]} )
+                unprocesseds = self.mdb_db[collection].find({'$and': [{'evlocker_date': {"$exists": False}}, {MDB_OBJECT_DATE: {"$gt": last_date}}]}).sort(MDB_OBJECT_DATE, pymongo.ASCENDING)
 
             # fetch unprocessed records
             for unprocessed in unprocesseds:
                 todo_obj = {}
-                todo_obj['SYSTEM_TYPE_CD'] = system_type
+                todo_obj['SYSTEM_TYPE_CD'] = EAO_SYSTEM_TYPE
                 if collection == 'Inspection':
                     todo_obj['PROJECT_ID'] = self.project_name_to_id(unprocessed['project'])
                     todo_obj['PROJECT_NAME'] = unprocessed['project']
@@ -601,7 +607,7 @@ class EventProcessor:
                     todo_obj['inspectionId'] = unprocessed['inspectionId'] if 'inspectionId' in unprocessed else None
                 todo_obj['COLLECTION'] = collection
                 todo_obj['OBJECT_ID'] = unprocessed['_id']
-                todo_obj['OBJECT_DATE'] = unprocessed['_updated_at']
+                todo_obj['OBJECT_DATE'] = unprocessed[MDB_OBJECT_DATE]
                 todo_obj['UPLOAD_DATE'] = unprocessed['_uploaded_at'] if '_uploaded_at' in unprocessed else None
                 todo_obj['UPLOAD_HASH'] = unprocessed['_uploaded_hash'] if '_uploaded_hash' in unprocessed else None
                 unprocessed_objects.append(todo_obj)
@@ -616,7 +622,8 @@ class EventProcessor:
 
         return unprocessed_objects
 
-
+    # organize records in a hierarchy - Site | Inspection | Observation | Media
+    # TODO currently we are only loading Inspections ...
     def organize_unprocessed_objects(self, mongo_rows):
         organized_objects = {}
         for row in mongo_rows:
@@ -679,6 +686,7 @@ class EventProcessor:
         return organized_objects
 
 
+    # main entry point for data processing and credential generation job
     # process inbound data from the mongodb inspections database
     def process_event_queue(self):
         cur = None
@@ -702,6 +710,7 @@ class EventProcessor:
         print("Generated cred count = ", len(creds))
 
 
+    # main entry point for processing status job
     def display_event_processing_status(self):
         tables = ['event_history_log', 'credential_log']
 
