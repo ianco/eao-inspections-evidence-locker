@@ -27,6 +27,9 @@ forms:
         - name: status
           from: literal
           source: ACT
+        - name: effective_date
+          from: helper
+          source: now
 
   eao-evidence-lockersafety-inspection:
     path: /eao-evidence-locker/safety-inspection
@@ -66,7 +69,10 @@ forms:
       type: text
       required: true
     mappings:
-      attributes: []
+      attributes: 
+        - name: effective_date
+          from: helper
+          source: now
 
   eao-evidence-lockerinspection-document:
     path: /eao-evidence-locker/inspection-document
@@ -115,6 +121,9 @@ forms:
       type: text
       required: true
     mappings:
-      attributes: []
+      attributes: 
+        - name: effective_date
+          from: helper
+          source: now
 
 ### eof ###

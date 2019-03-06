@@ -1,7 +1,7 @@
 #!/usr/bin/python
  
 import psycopg2
-from pymongo import MongoClient
+from pymongo import MongoClient, ASCENDING
 from bson.objectid import ObjectId
 import datetime
 import pytz
@@ -15,7 +15,7 @@ import traceback
 from von_pipeline.config import config
 
 
-system_type = 'EAO_EL'
+EAO_SYSTEM_TYPE = 'EAO_EL'
 
 site_credential = 'SITE'
 site_schema = 'inspection-site.eao-evidence-locker'
@@ -30,6 +30,7 @@ obsvn_schema = 'inspection-document.eao-evidence-locker'
 obsvn_version = '1.0.0'
 
 MDB_COLLECTIONS = ['Inspection','Observation','Audio','Photo','Video']
+MDB_OBJECT_DATE = '_updated_at'
 
 CORP_BATCH_SIZE = 3000
 
@@ -190,8 +191,10 @@ class EventProcessor:
             CREATE TABLE IF NOT EXISTS CREDENTIAL_LOG (
                 RECORD_ID SERIAL PRIMARY KEY,
                 SYSTEM_TYPE_CD VARCHAR(255) NOT NULL, 
-                SOURCE_COLLECTION VARCHAR(255),
-                SOURCE_ID VARCHAR(255),
+                SOURCE_COLLECTION VARCHAR(255) NOT NULL,
+                SOURCE_ID VARCHAR(255) NOT NULL,
+                PROJECT_ID VARCHAR(255) NOT NULL,
+                PROJECT_NAME VARCHAR(255) NOT NULL,
                 CREDENTIAL_TYPE_CD VARCHAR(255) NOT NULL,
                 CREDENTIAL_ID VARCHAR(255) NOT NULL,
                 SCHEMA_NAME VARCHAR(255) NOT NULL,
@@ -297,8 +300,9 @@ class EventProcessor:
             row = cur.fetchone()
             cur.close()
             cur = None
-            event = {}
+            event = None
             if row is not None:
+                event = {}
                 event['RECORD_ID'] = row[0]
                 event['SYSTEM_TYPE_CD'] = row[1]
                 event['COLLECTION'] = row[2]
@@ -350,16 +354,16 @@ class EventProcessor:
         return record_id
 
     # insert a generated JSON credential into our log
-    def insert_json_credential(self, cur, system_cd, cred_type, cred_id, schema_name, schema_version, credential, source_collection=None, source_id=None):
+    def insert_json_credential(self, cur, system_cd, cred_type, cred_id, schema_name, schema_version, credential, source_collection, source_id, project_id, project_name):
         sql = """INSERT INTO CREDENTIAL_LOG (SYSTEM_TYPE_CD, CREDENTIAL_TYPE_CD, CREDENTIAL_ID, 
-                SCHEMA_NAME, SCHEMA_VERSION, CREDENTIAL_JSON, CREDENTIAL_HASH, ENTRY_DATE, SOURCE_COLLECTION, SOURCE_ID)
-                VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING RECORD_ID;"""
+                SCHEMA_NAME, SCHEMA_VERSION, CREDENTIAL_JSON, CREDENTIAL_HASH, ENTRY_DATE, SOURCE_COLLECTION, SOURCE_ID, PROJECT_ID, PROJECT_NAME)
+                VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING RECORD_ID;"""
         # create row(s) for corp creds json info
         cred_json = json.dumps(credential, cls=CustomJsonEncoder, sort_keys=True)
         cred_hash = hashlib.sha256(cred_json.encode('utf-8')).hexdigest()
         try:
             cur.execute("savepoint save_" + cred_type)
-            cur.execute(sql, (system_cd, cred_type, cred_id, schema_name, schema_version, cred_json, cred_hash, datetime.datetime.now(), source_collection, source_id))
+            cur.execute(sql, (system_cd, cred_type, cred_id, schema_name, schema_version, cred_json, cred_hash, datetime.datetime.now(), source_collection, source_id, project_id, project_name))
             return 1
         except Exception as e:
             # ignore duplicate hash ("duplicate key value violates unique constraint "cl_hash_index"")
@@ -393,11 +397,11 @@ class EventProcessor:
         return False
 
     # store credentials for the provided corp
-    def store_credentials(self, cur, system_typ_cd, corp_cred, source_collection=None, source_id=None):
+    def store_credentials(self, cur, system_typ_cd, corp_cred, source_collection, source_id, project_id, project_name):
         cred_count = 0
         cred_count = cred_count + self.insert_json_credential(cur, system_typ_cd, corp_cred['cred_type'], corp_cred['id'], 
                                                         corp_cred['schema'], corp_cred['version'], corp_cred['credential'],
-                                                        source_collection=source_collection, source_id=source_id)
+                                                        source_collection, source_id, project_id, project_name)
         return cred_count
 
     def build_credential_dict(self, cred_type, schema, version, cred_id, credential):
@@ -411,14 +415,41 @@ class EventProcessor:
 
 
     # generate a foundational site credential
-    def generate_site_credential(self, site):
+    def generate_site_credential(self, site, effective_date):
         site_cred = {}
         site_cred['project_id'] = site['PROJECT_ID']
         site_cred['project_name'] = site['PROJECT_NAME']
         site_cred['location'] = 'Vancouver'
         site_cred['entity_status'] = 'ACT'
+        site_cred['effective_date'] = effective_date
 
         return self.build_credential_dict(site_credential, site_schema, site_version, site_cred['project_id'], site_cred)
+
+
+    # find an (existing) credential for the site
+    def find_site_credential(self, system_type, site):
+        cur = None
+        try:
+            cur = self.conn.cursor()
+            cur.execute("""SELECT PROJECT_ID, PROJECT_NAME FROM CREDENTIAL_LOG 
+                           where SYSTEM_TYPE_CD = %s and PROJECT_ID = %s and CREDENTIAL_TYPE_CD = %s""", 
+                           (system_type, site['PROJECT_ID'], site_credential,))
+            row = cur.fetchone()
+            cur.close()
+            cur = None
+            if row is None:
+                return None
+            site_cred = {}
+            site_cred['project_id'] = row[0]
+            site_cred['project_name'] = row[1]
+            return site_cred
+        except (Exception, psycopg2.DatabaseError) as error:
+            print(error)
+            print(traceback.print_exc())
+            raise
+        finally:
+            if cur is not None:
+                cur.close()
 
 
     # generate a site inspection credential
@@ -429,6 +460,7 @@ class EventProcessor:
         inspection_cred['created_date'] = mdb_inspection['_created_at']
         inspection_cred['updated_date'] = mdb_inspection['_updated_at']
         inspection_cred['hash_value'] = mdb_inspection['_uploaded_hash'] if '_uploaded_hash' in mdb_inspection else None
+        inspection_cred['effective_date'] = mdb_inspection['_updated_at']
 
         return self.build_credential_dict(inspc_credential, inspc_schema, inspc_version, 
                                           str(inspection_cred['project_id']) +':' + str(inspection_cred['inspection_id']), 
@@ -470,25 +502,32 @@ class EventProcessor:
             for site_id in obj_tree:
                 site = obj_tree[site_id]
 
-                # issue foundational credential
-                cred = self.generate_site_credential(site)
-                if save_to_db:
-                    self.store_credentials(cur, system_type, cred)
-                creds.append(cred)
-                
                 # hash of inspections:
                 for inspection_id in site['inspections']:
                     inspection = site['inspections'][inspection_id]
                     i_d = inspection['inspection']
 
-                    # fetch inspection report and issue credential
+                    # record the fact that we have processed this Inspection
+                    if save_to_db:
+                        inspection_rec_id = self.insert_inspection_history(cur, EAO_SYSTEM_TYPE, 'Inspection', i_d['PROJECT_ID'], i_d['PROJECT_NAME'], i_d['OBJECT_ID'], i_d['OBJECT_DATE'], i_d['UPLOAD_DATE'], i_d['UPLOAD_HASH'])
+
+                    # issue foundational credential / only if we don't have one yet
+                    site_cred = self.find_site_credential(EAO_SYSTEM_TYPE, site)
+                    if site_cred is None:
+                        site_cred = self.generate_site_credential(site, i_d['OBJECT_DATE'])
+                        if save_to_db:
+                            self.store_credentials(cur, EAO_SYSTEM_TYPE, site_cred, 'Inspection', inspection_rec_id, i_d['PROJECT_ID'], i_d['PROJECT_NAME'])
+                        creds.append(site_cred)
+
+                    # fetch inspection report from mongodb (including observations and media) and issue credential
                     mdb_inspection = self.fetch_mdb_inspection(site, inspection)
                     cred = self.generate_inspection_credential(site, inspection, mdb_inspection)
                     if save_to_db:
-                        inspection_rec_id = self.insert_inspection_history(cur, system_type, 'Inspection', i_d['PROJECT_ID'], i_d['PROJECT_NAME'], i_d['OBJECT_ID'], i_d['OBJECT_DATE'], i_d['UPLOAD_DATE'], i_d['UPLOAD_HASH'])
-                        self.store_credentials(cur, system_type, cred, source_collection='Inspection', source_id=inspection_rec_id)
+                        self.store_credentials(cur, EAO_SYSTEM_TYPE, cred, 'Inspection', inspection_rec_id, i_d['PROJECT_ID'], i_d['PROJECT_NAME'])
                     creds.append(cred)
-                    max_dates['Inspection'] = self.max_collection_date(max_dates, 'Inspection', mdb_inspection['_updated_at'])
+
+                    # save max inspection date
+                    max_dates['Inspection'] = self.max_collection_date(max_dates, 'Inspection', mdb_inspection[MDB_OBJECT_DATE])
 
                     # hash of observations:
                     for observation_id in inspection['observations']:
@@ -514,8 +553,9 @@ class EventProcessor:
             cur = None
 
             # record max dates processed
-            for collection in max_dates:
-                self.insert_processed_event(system_type, collection, max_dates[collection])
+            if save_to_db:
+                for collection in max_dates:
+                    self.insert_processed_event(EAO_SYSTEM_TYPE, collection, max_dates[collection])
                 
             return creds
         except (Exception, psycopg2.DatabaseError) as error:
@@ -537,14 +577,27 @@ class EventProcessor:
 
 
     # find all un-processed objects in mongo db
+    # TODO this currently fetches Inspections only (assumes any updates will include an update to the Inspection)
     def find_unprocessed_objects(self):
         unprocessed_objects = []
-        for collection in MDB_COLLECTIONS:
+
+        # TODO for now just look at the Investigations collection ...
+        # TODO if necessary fetch other collections as well
+        for collection in [MDB_COLLECTIONS[0],]:
+            # find last processed date for this collection
+            last_event = self.get_last_processed_event(EAO_SYSTEM_TYPE, collection)
+
             # return if evlocker_date is missing or null
-            unprocesseds = self.mdb_db[collection].find( { 'evlocker_date' : { "$exists" : False } } );
+            if last_event is None:
+                unprocesseds = self.mdb_db[collection].find( { 'evlocker_date' : { "$exists" : False } } ).sort(MDB_OBJECT_DATE, ASCENDING)
+            else:
+                last_date = last_event['OBJECT_DATE']
+                unprocesseds = self.mdb_db[collection].find({'$and': [{'evlocker_date': {"$exists": False}}, {MDB_OBJECT_DATE: {"$gt": last_date}}]}).sort(MDB_OBJECT_DATE, ASCENDING)
+
+            # fetch unprocessed records
             for unprocessed in unprocesseds:
                 todo_obj = {}
-                todo_obj['SYSTEM_TYPE_CD'] = system_type
+                todo_obj['SYSTEM_TYPE_CD'] = EAO_SYSTEM_TYPE
                 if collection == 'Inspection':
                     todo_obj['PROJECT_ID'] = self.project_name_to_id(unprocessed['project'])
                     todo_obj['PROJECT_NAME'] = unprocessed['project']
@@ -557,7 +610,7 @@ class EventProcessor:
                     todo_obj['_p_inspection'] = unprocessed['_p_inspection'] if '_p_inspection' in unprocessed else None
                 todo_obj['COLLECTION'] = collection
                 todo_obj['OBJECT_ID'] = unprocessed['_id']
-                todo_obj['OBJECT_DATE'] = unprocessed['_updated_at']
+                todo_obj['OBJECT_DATE'] = unprocessed[MDB_OBJECT_DATE]
                 todo_obj['UPLOAD_DATE'] = unprocessed['_uploaded_at'] if '_uploaded_at' in unprocessed else None
                 todo_obj['UPLOAD_HASH'] = unprocessed['_uploaded_hash'] if '_uploaded_hash' in unprocessed else None
                 unprocessed_objects.append(todo_obj)
@@ -572,7 +625,8 @@ class EventProcessor:
 
         return unprocessed_objects
 
-
+    # organize records in a hierarchy - Site | Inspection | Observation | Media
+    # TODO currently we are only loading Inspections ...
     def organize_unprocessed_objects(self, mongo_rows):
         organized_objects = {}
         for row in mongo_rows:
@@ -637,6 +691,7 @@ class EventProcessor:
         return organized_objects
 
 
+    # main entry point for data processing and credential generation job
     # process inbound data from the mongodb inspections database
     def process_event_queue(self):
         cur = None
@@ -660,6 +715,7 @@ class EventProcessor:
         print("Generated cred count = ", len(creds))
 
 
+    # main entry point for processing status job
     def display_event_processing_status(self):
         tables = ['event_history_log', 'credential_log']
 
