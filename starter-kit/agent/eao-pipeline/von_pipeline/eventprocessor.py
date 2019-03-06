@@ -617,7 +617,7 @@ class EventProcessor:
 
         # fill in project info for all items
         for unprocessed_object in unprocessed_objects:
-            if unprocessed_object['COLLECTION'] != 'Inspection' and 'inspectionId' in unprocessed_object:
+            if unprocessed_object['COLLECTION'] != 'Inspection' and ('_p_inspection' in unprocessed_object or 'inspectionId' in unprocessed_object): 
                 inspection = self.mdb_db['Inspection'].find_one( { '$or': [{'_id' : unprocessed_object['inspectionId']}, {'id' : unprocessed_object['_p_inspection']}] } );
                 if inspection is not None:
                     unprocessed_object['PROJECT_ID'] = inspection['project']
