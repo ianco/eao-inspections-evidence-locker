@@ -8,9 +8,6 @@
 # running flask
 gunicorn
 
-# downloading data from s3
-awscli<1.14.0
-JSONBender
 aiohttp
 pytz
 pymongo
