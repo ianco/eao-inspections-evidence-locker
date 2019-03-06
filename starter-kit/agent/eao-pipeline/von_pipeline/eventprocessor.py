@@ -190,8 +190,10 @@ class EventProcessor:
             CREATE TABLE IF NOT EXISTS CREDENTIAL_LOG (
                 RECORD_ID SERIAL PRIMARY KEY,
                 SYSTEM_TYPE_CD VARCHAR(255) NOT NULL, 
-                SOURCE_COLLECTION VARCHAR(255),
-                SOURCE_ID VARCHAR(255),
+                SOURCE_COLLECTION VARCHAR(255) NOT NULL,
+                SOURCE_ID VARCHAR(255) NOT NULL,
+                PROJECT_ID VARCHAR(255) NOT NULL,
+                PROJECT_NAME VARCHAR(255) NOT NULL,
                 CREDENTIAL_TYPE_CD VARCHAR(255) NOT NULL,
                 CREDENTIAL_ID VARCHAR(255) NOT NULL,
                 SCHEMA_NAME VARCHAR(255) NOT NULL,
@@ -297,8 +299,9 @@ class EventProcessor:
             row = cur.fetchone()
             cur.close()
             cur = None
-            event = {}
+            event = None
             if row is not None:
+                event = {}
                 event['RECORD_ID'] = row[0]
                 event['SYSTEM_TYPE_CD'] = row[1]
                 event['COLLECTION'] = row[2]
@@ -350,16 +353,16 @@ class EventProcessor:
         return record_id
 
     # insert a generated JSON credential into our log
-    def insert_json_credential(self, cur, system_cd, cred_type, cred_id, schema_name, schema_version, credential, source_collection=None, source_id=None):
+    def insert_json_credential(self, cur, system_cd, cred_type, cred_id, schema_name, schema_version, credential, source_collection, source_id, project_id, project_name):
         sql = """INSERT INTO CREDENTIAL_LOG (SYSTEM_TYPE_CD, CREDENTIAL_TYPE_CD, CREDENTIAL_ID, 
-                SCHEMA_NAME, SCHEMA_VERSION, CREDENTIAL_JSON, CREDENTIAL_HASH, ENTRY_DATE, SOURCE_COLLECTION, SOURCE_ID)
-                VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING RECORD_ID;"""
+                SCHEMA_NAME, SCHEMA_VERSION, CREDENTIAL_JSON, CREDENTIAL_HASH, ENTRY_DATE, SOURCE_COLLECTION, SOURCE_ID, PROJECT_ID, PROJECT_NAME)
+                VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING RECORD_ID;"""
         # create row(s) for corp creds json info
         cred_json = json.dumps(credential, cls=CustomJsonEncoder, sort_keys=True)
         cred_hash = hashlib.sha256(cred_json.encode('utf-8')).hexdigest()
         try:
             cur.execute("savepoint save_" + cred_type)
-            cur.execute(sql, (system_cd, cred_type, cred_id, schema_name, schema_version, cred_json, cred_hash, datetime.datetime.now(), source_collection, source_id))
+            cur.execute(sql, (system_cd, cred_type, cred_id, schema_name, schema_version, cred_json, cred_hash, datetime.datetime.now(), source_collection, source_id, project_id, project_name))
             return 1
         except Exception as e:
             # ignore duplicate hash ("duplicate key value violates unique constraint "cl_hash_index"")
@@ -393,11 +396,11 @@ class EventProcessor:
         return False
 
     # store credentials for the provided corp
-    def store_credentials(self, cur, system_typ_cd, corp_cred, source_collection=None, source_id=None):
+    def store_credentials(self, cur, system_typ_cd, corp_cred, source_collection, source_id, project_id, project_name):
         cred_count = 0
         cred_count = cred_count + self.insert_json_credential(cur, system_typ_cd, corp_cred['cred_type'], corp_cred['id'], 
                                                         corp_cred['schema'], corp_cred['version'], corp_cred['credential'],
-                                                        source_collection=source_collection, source_id=source_id)
+                                                        source_collection, source_id, project_id, project_name)
         return cred_count
 
     def build_credential_dict(self, cred_type, schema, version, cred_id, credential):
@@ -419,6 +422,32 @@ class EventProcessor:
         site_cred['entity_status'] = 'ACT'
 
         return self.build_credential_dict(site_credential, site_schema, site_version, site_cred['project_id'], site_cred)
+
+
+    # find an (existing) credential for the site
+    def find_site_credential(self, site):
+        cur = None
+        try:
+            cur = self.conn.cursor()
+            cur.execute("""SELECT PROJECT_ID, PROJECT_NAME FROM CREDENTIAL_LOG 
+                           where SYSTEM_TYPE_CD = %s and PROJECT_ID = %s and CREDENTIAL_TYPE_CD = %s""", 
+                           (system_type, site['PROJECT_ID'], site_credential,))
+            row = cur.fetchone()
+            cur.close()
+            cur = None
+            if row is None:
+                return None
+            site_cred = {}
+            site_cred['project_id'] = row[0]
+            site_cred['project_name'] = row[1]
+            return site_cred
+        except (Exception, psycopg2.DatabaseError) as error:
+            print(error)
+            print(traceback.print_exc())
+            raise
+        finally:
+            if cur is not None:
+                cur.close()
 
 
     # generate a site inspection credential
@@ -470,23 +499,27 @@ class EventProcessor:
             for site_id in obj_tree:
                 site = obj_tree[site_id]
 
-                # issue foundational credential
-                cred = self.generate_site_credential(site)
-                if save_to_db:
-                    self.store_credentials(cur, system_type, cred)
-                creds.append(cred)
-
                 # hash of inspections:
                 for inspection_id in site['inspections']:
                     inspection = site['inspections'][inspection_id]
                     i_d = inspection['inspection']
 
+                    if save_to_db:
+                        inspection_rec_id = self.insert_inspection_history(cur, system_type, 'Inspection', i_d['PROJECT_ID'], i_d['PROJECT_NAME'], i_d['OBJECT_ID'], i_d['OBJECT_DATE'], i_d['UPLOAD_DATE'], i_d['UPLOAD_HASH'])
+
+                    # issue foundational credential / only if we don't have one yet
+                    site_cred = self.find_site_credential(site)
+                    if site_cred is None:
+                        site_cred = self.generate_site_credential(site)
+                        if save_to_db:
+                            self.store_credentials(cur, system_type, site_cred, 'Inspection', inspection_rec_id, i_d['PROJECT_ID'], i_d['PROJECT_NAME'])
+                        creds.append(site_cred)
+
                     # fetch inspection report and issue credential
                     mdb_inspection = self.fetch_mdb_inspection(site, inspection)
                     cred = self.generate_inspection_credential(site, inspection, mdb_inspection)
                     if save_to_db:
-                        inspection_rec_id = self.insert_inspection_history(cur, system_type, 'Inspection', i_d['PROJECT_ID'], i_d['PROJECT_NAME'], i_d['OBJECT_ID'], i_d['OBJECT_DATE'], i_d['UPLOAD_DATE'], i_d['UPLOAD_HASH'])
-                        self.store_credentials(cur, system_type, cred, source_collection='Inspection', source_id=inspection_rec_id)
+                        self.store_credentials(cur, system_type, cred, 'Inspection', inspection_rec_id, i_d['PROJECT_ID'], i_d['PROJECT_NAME'])
                     creds.append(cred)
                     max_dates['Inspection'] = self.max_collection_date(max_dates, 'Inspection', mdb_inspection['_updated_at'])
 
@@ -514,8 +547,9 @@ class EventProcessor:
             cur = None
 
             # record max dates processed
-            for collection in max_dates:
-                self.insert_processed_event(system_type, collection, max_dates[collection])
+            if save_to_db:
+                for collection in max_dates:
+                    self.insert_processed_event(system_type, collection, max_dates[collection])
                 
             return creds
         except (Exception, psycopg2.DatabaseError) as error:
@@ -539,9 +573,20 @@ class EventProcessor:
     # find all un-processed objects in mongo db
     def find_unprocessed_objects(self):
         unprocessed_objects = []
-        for collection in MDB_COLLECTIONS:
+
+        # TODO for now just look at the Investigations collection ...
+        for collection in [MDB_COLLECTIONS[0],]:
+            # find last processed date for this collection
+            last_event = self.get_last_processed_event(system_type, collection)
+
             # return if evlocker_date is missing or null
-            unprocesseds = self.mdb_db[collection].find( { 'evlocker_date' : { "$exists" : False } } );
+            if last_event is None:
+                unprocesseds = self.mdb_db[collection].find( { 'evlocker_date' : { "$exists" : False } } )
+            else:
+                last_date = last_event['OBJECT_DATE']
+                unprocesseds = self.mdb_db[collection].find( {'$and': [{'evlocker_date': {"$exists": False}}, {'_updated_at': {"$gt": last_date}}]} )
+
+            # fetch unprocessed records
             for unprocessed in unprocesseds:
                 todo_obj = {}
                 todo_obj['SYSTEM_TYPE_CD'] = system_type
