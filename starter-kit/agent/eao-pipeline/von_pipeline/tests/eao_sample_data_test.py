@@ -10,8 +10,6 @@ from von_pipeline.eventprocessor import EventProcessor
 
 def test_eao_sample_data():
     with EventProcessor() as eao_pipeline:
-        mongo_sample_data(3, 2)
-
         objects = eao_pipeline.find_unprocessed_objects()
         obj_tree = eao_pipeline.organize_unprocessed_objects(objects)
 
@@ -19,8 +17,6 @@ def test_eao_sample_data():
 
 def test_eao_generate_creds():
     with EventProcessor() as eao_pipeline:
-        mongo_sample_data(3, 2)
-
         objects = eao_pipeline.find_unprocessed_objects()
         obj_tree = eao_pipeline.organize_unprocessed_objects(objects)
 

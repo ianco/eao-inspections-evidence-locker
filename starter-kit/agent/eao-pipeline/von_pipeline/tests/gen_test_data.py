@@ -49,8 +49,8 @@ def random_date_dates(old_date, new_date):
 
 def gen_user():
     user = {
-        "updatedAt":random_date_days(-5, -1),
-        "createdAt":random_date_days(-20, -5),
+        "_updated_at":random_date_days(-5, -1),
+        "_created_at":random_date_days(-20, -5),
         "username":random_alpha_string(20),
         "email":random_alpha_string(20) + '@' + random_alpha_string(12) + '.' + random_alpha_string(3),
         "emailVerified":True,
@@ -65,8 +65,8 @@ def gen_user():
 
 def gen_team(user):
     team = {
-        "updatedAt":random_date_days(-5, -1),
-        "createdAt":random_date_days(-20, -5),
+        "_updated_at":random_date_days(-5, -1),
+        "_created_at":random_date_days(-20, -5),
         "color":random_alpha_string(8),
         "name":random_alpha_string(20),
         "isActive":True,
@@ -76,10 +76,10 @@ def gen_team(user):
 def gen_inspection(user, team):
     inspection = {
         "teamID":team['_id'],
-        "updatedAt":random_date_days(-5, -1),
-        "createdAt":random_date_days(-20, -5),
-        "uploadedAt":random_date_days(-3, -1),
-        "uploadedHash":random_alpha_string(40),
+        "_updated_at":random_date_days(-5, -1),
+        "_created_at":random_date_days(-20, -5),
+        "_uploaded_at":random_date_days(-3, -1),
+        "_uploaded_hash":random_alpha_string(40),
         "start":random_date_days(-20, -5),
         "number":random_numeric_string(8),
         "subtext":random_alpha_string(40, contains_spaces=True),
@@ -98,10 +98,10 @@ def gen_observation(inspection):
     observation = {
         "inspectionId":inspection['_id'],
         "pinnedAt":random_date_days(-5, -1),
-        "updatedAt":random_date_days(-5, -1),
-        "createdAt":random_date_days(-20, -5),
-        "uploadedAt":random_date_days(-3, -1),
-        "uploadedHash":random_alpha_string(40),
+        "_updated_at":random_date_days(-5, -1),
+        "_created_at":random_date_days(-20, -5),
+        "_uploaded_at":random_date_days(-3, -1),
+        "_uploaded_hash":random_alpha_string(40),
         "title":random_alpha_string(40, contains_spaces=True),
         "requirement":random_alpha_string(40, contains_spaces=True),
         "observationDescription":random_alpha_string(40, contains_spaces=True),
@@ -112,10 +112,10 @@ def gen_audio(observation):
     audio = {
         "inspectionId":observation['inspectionId'],
         "observationId":observation['_id'],
-        "updatedAt":random_date_days(-5, -1),
-        "createdAt":random_date_days(-20, -5),
-        "uploadedAt":random_date_days(-3, -1),
-        "uploadedHash":random_alpha_string(40),
+        "_updated_at":random_date_days(-5, -1),
+        "_created_at":random_date_days(-20, -5),
+        "_uploaded_at":random_date_days(-3, -1),
+        "_uploaded_hash":random_alpha_string(40),
         "notes":random_alpha_string(40, contains_spaces=True),
         "index":random.randint(1, 100),
         "title":random_alpha_string(40, contains_spaces=True),
@@ -126,10 +126,10 @@ def gen_photo(observation):
     photo = {
         "observationId":observation['_id'],
         "inspectionId":observation['inspectionId'],
-        "updatedAt":random_date_days(-5, -1),
-        "createdAt":random_date_days(-20, -5),
-        "uploadedAt":random_date_days(-3, -1),
-        "uploadedHash":random_alpha_string(40),
+        "_updated_at":random_date_days(-5, -1),
+        "_created_at":random_date_days(-20, -5),
+        "_uploaded_at":random_date_days(-3, -1),
+        "_uploaded_hash":random_alpha_string(40),
         "caption":random_alpha_string(40, contains_spaces=True),
         "timestamp":random_date_days(-5, -1),
         "index":random.randint(1, 100),
@@ -140,10 +140,10 @@ def gen_video(observation):
     video = {
         "observationId":observation['_id'],
         "inspectionId":observation['inspectionId'],
-        "updatedAt":random_date_days(-5, -1),
-        "createdAt":random_date_days(-20, -5),
-        "uploadedAt":random_date_days(-3, -1),
-        "uploadedHash":random_alpha_string(40),
+        "_updated_at":random_date_days(-5, -1),
+        "_created_at":random_date_days(-20, -5),
+        "_uploaded_at":random_date_days(-3, -1),
+        "_uploaded_hash":random_alpha_string(40),
         "index":random.randint(1, 100),
         "notes":random_alpha_string(40, contains_spaces=True),
         "title":random_alpha_string(40, contains_spaces=True),
@@ -160,13 +160,13 @@ def mongo_sample_data(n_inspections, n_observations):
     client = MongoClient('mongodb://%s:%s@%s:%s' % (mdb_config['user'], mdb_config['password'], mdb_config['host'], mdb_config['port']))
     db = client[mdb_config['database']]
 
-    users = db['users']
-    teams = db['teams']
-    inspections = db['inspections']
-    observations = db['observations']
-    audios = db['audios']
-    photos = db['photos']
-    videos = db['videos']
+    users = db['User']
+    teams = db['Team']
+    inspections = db['Inspection']
+    observations = db['Observation']
+    audios = db['Audio']
+    photos = db['Photo']
+    videos = db['Video']
 
     user = gen_user()
     user_id = users.insert_one(user).inserted_id
