@@ -34,6 +34,10 @@ issuers:
     - description: The core site credential issued by EAO Evidence Locker
       schema: inspection-site.eao-evidence-locker
       issuer_url: $ENDPOINT_URL/eao-evidence-locker/inspection-site
+      credential:
+        effective_date:
+          input: effective_date
+          from: claim
       topic:
         source_id:
           input: project_id
@@ -76,6 +80,10 @@ issuers:
       issuer_url: $ENDPOINT_URL/eao-evidence-locker/safety-inspection
       depends_on:
       - registration
+      credential:
+        effective_date:
+          input: effective_date
+          from: claim
       topic:
         source_id:
           input: project_id
@@ -148,6 +156,10 @@ issuers:
       issuer_url: $ENDPOINT_URL/eao-evidence-locker/inspection-document
       depends_on:
       - inspection
+      credential:
+        effective_date:
+          input: effective_date
+          from: claim
       topic:
         source_id:
           input: project_id

@@ -1,7 +1,7 @@
 #!/usr/bin/python
  
 import psycopg2
-from pymongo import MongoClient
+from pymongo import MongoClient, ASCENDING
 from bson.objectid import ObjectId
 import datetime
 import pytz
@@ -415,12 +415,13 @@ class EventProcessor:
 
 
     # generate a foundational site credential
-    def generate_site_credential(self, site):
+    def generate_site_credential(self, site, effective_date):
         site_cred = {}
         site_cred['project_id'] = site['PROJECT_ID']
         site_cred['project_name'] = site['PROJECT_NAME']
         site_cred['location'] = 'Vancouver'
         site_cred['entity_status'] = 'ACT'
+        site_cred['effective_date'] = effective_date
 
         return self.build_credential_dict(site_credential, site_schema, site_version, site_cred['project_id'], site_cred)
 
@@ -459,6 +460,7 @@ class EventProcessor:
         inspection_cred['created_date'] = mdb_inspection['_created_at']
         inspection_cred['updated_date'] = mdb_inspection['_updated_at']
         inspection_cred['hash_value'] = mdb_inspection['_uploaded_hash'] if '_uploaded_hash' in mdb_inspection else None
+        inspection_cred['effective_date'] = mdb_inspection['_updated_at']
 
         return self.build_credential_dict(inspc_credential, inspc_schema, inspc_version, 
                                           str(inspection_cred['project_id']) +':' + str(inspection_cred['inspection_id']), 
@@ -512,7 +514,7 @@ class EventProcessor:
                     # issue foundational credential / only if we don't have one yet
                     site_cred = self.find_site_credential(EAO_SYSTEM_TYPE, site)
                     if site_cred is None:
-                        site_cred = self.generate_site_credential(site)
+                        site_cred = self.generate_site_credential(site, i_d['OBJECT_DATE'])
                         if save_to_db:
                             self.store_credentials(cur, EAO_SYSTEM_TYPE, site_cred, 'Inspection', inspection_rec_id, i_d['PROJECT_ID'], i_d['PROJECT_NAME'])
                         creds.append(site_cred)
@@ -587,10 +589,10 @@ class EventProcessor:
 
             # return if evlocker_date is missing or null
             if last_event is None:
-                unprocesseds = self.mdb_db[collection].find( { 'evlocker_date' : { "$exists" : False } } ).sort(MDB_OBJECT_DATE, pymongo.ASCENDING)
+                unprocesseds = self.mdb_db[collection].find( { 'evlocker_date' : { "$exists" : False } } ).sort(MDB_OBJECT_DATE, ASCENDING)
             else:
                 last_date = last_event['OBJECT_DATE']
-                unprocesseds = self.mdb_db[collection].find({'$and': [{'evlocker_date': {"$exists": False}}, {MDB_OBJECT_DATE: {"$gt": last_date}}]}).sort(MDB_OBJECT_DATE, pymongo.ASCENDING)
+                unprocesseds = self.mdb_db[collection].find({'$and': [{'evlocker_date': {"$exists": False}}, {MDB_OBJECT_DATE: {"$gt": last_date}}]}).sort(MDB_OBJECT_DATE, ASCENDING)
 
             # fetch unprocessed records
             for unprocessed in unprocesseds:
