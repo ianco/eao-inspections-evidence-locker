@@ -605,6 +605,7 @@ class EventProcessor:
                     todo_obj['observationId'] = unprocessed['observationId'] if 'observationId' in unprocessed else None
                 if collection != 'Inspection':
                     todo_obj['inspectionId'] = unprocessed['inspectionId'] if 'inspectionId' in unprocessed else None
+                    todo_obj['_p_inspection'] = unprocessed['_p_inspection'] if '_p_inspection' in unprocessed else None
                 todo_obj['COLLECTION'] = collection
                 todo_obj['OBJECT_ID'] = unprocessed['_id']
                 todo_obj['OBJECT_DATE'] = unprocessed[MDB_OBJECT_DATE]
@@ -615,7 +616,7 @@ class EventProcessor:
         # fill in project info for all items
         for unprocessed_object in unprocessed_objects:
             if unprocessed_object['COLLECTION'] != 'Inspection' and 'inspectionId' in unprocessed_object:
-                inspection = self.mdb_db['Inspection'].find_one( { '_id' : unprocessed_object['inspectionId'] } );
+                inspection = self.mdb_db['Inspection'].find_one( { '$or': [{'_id' : unprocessed_object['inspectionId']}, {'id' : unprocessed_object['_p_inspection']}] } );
                 if inspection is not None:
                     unprocessed_object['PROJECT_ID'] = inspection['project']
                     unprocessed_object['PROJECT_NAME'] = inspection['project']
@@ -639,6 +640,8 @@ class EventProcessor:
 
                 if row['COLLECTION'] == 'Inspection':
                     inspection_id = row['OBJECT_ID']
+                elif '_p_inspection' in row:
+                    inspection_id = row['_p_inspection']
                 elif 'inspectionId' in row:
                     inspection_id = row['inspectionId']
                 else:
