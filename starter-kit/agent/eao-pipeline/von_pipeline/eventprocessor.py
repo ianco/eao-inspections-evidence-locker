@@ -131,9 +131,8 @@ class EventProcessor:
             CREATE TABLE IF NOT EXISTS LAST_EVENT (
                 RECORD_ID SERIAL PRIMARY KEY,
                 SYSTEM_TYPE_CD VARCHAR(255) NOT NULL, 
-                OBJECT_ID INTEGER NOT NULL,
+                COLLECTION VARCHAR(255) NOT NULL,
                 OBJECT_DATE TIMESTAMP NOT NULL,
-                UPLOAD_DATE TIMESTAMP NOT NULL,
                 ENTRY_DATE TIMESTAMP NOT NULL
             )
             """,
@@ -145,13 +144,13 @@ class EventProcessor:
             CREATE TABLE IF NOT EXISTS EVENT_HISTORY_LOG (
                 RECORD_ID SERIAL PRIMARY KEY,
                 SYSTEM_TYPE_CD VARCHAR(255) NOT NULL, 
+                COLLECTION VARCHAR(255) NOT NULL,
                 PROJECT_ID VARCHAR(255) NOT NULL,
                 PROJECT_NAME VARCHAR(255) NOT NULL,
-                COLLECTION_TYPE VARCHAR(255) NOT NULL,
-                OBJECT_ID INTEGER NOT NULL,
+                OBJECT_ID VARCHAR(255) NOT NULL,
                 OBJECT_DATE TIMESTAMP NOT NULL,
-                UPLOAD_DATE TIMESTAMP NOT NULL,
-                UPLOAD_HASH TIMESTAMP NOT NULL,
+                UPLOAD_DATE TIMESTAMP,
+                UPLOAD_HASH VARCHAR(255),
                 ENTRY_DATE TIMESTAMP NOT NULL,
                 PROCESS_DATE TIMESTAMP,
                 PROCESS_SUCCESS CHAR,
@@ -191,6 +190,8 @@ class EventProcessor:
             CREATE TABLE IF NOT EXISTS CREDENTIAL_LOG (
                 RECORD_ID SERIAL PRIMARY KEY,
                 SYSTEM_TYPE_CD VARCHAR(255) NOT NULL, 
+                SOURCE_COLLECTION VARCHAR(255),
+                SOURCE_ID VARCHAR(255),
                 CREDENTIAL_TYPE_CD VARCHAR(255) NOT NULL,
                 CREDENTIAL_ID VARCHAR(255) NOT NULL,
                 SCHEMA_NAME VARCHAR(255) NOT NULL,
@@ -265,14 +266,14 @@ class EventProcessor:
                 cur.close()
 
     # record the last event processed
-    def insert_last_event(self, system_type, event_id, event_date):
+    def insert_processed_event(self, system_type, collection, object_date):
         """ insert a new event into the event table """
-        sql = """INSERT INTO LAST_EVENT (SYSTEM_TYPE_CD, EVENT_ID, EVENT_DATE, ENTRY_DATE)
+        sql = """INSERT INTO LAST_EVENT (SYSTEM_TYPE_CD, COLLECTION, OBJECT_DATE, ENTRY_DATE)
                  VALUES(%s, %s, %s, %s) RETURNING RECORD_ID;"""
         cur = None
         try:
             cur = self.conn.cursor()
-            cur.execute(sql, (system_type, event_id, event_date, datetime.datetime.now(),))
+            cur.execute(sql, (system_type, collection, object_date, datetime.datetime.now(),))
             _record_id = cur.fetchone()[0]
             self.conn.commit()
             cur.close()
@@ -285,19 +286,25 @@ class EventProcessor:
             if cur is not None:
                 cur.close()
 
-    # get the id of the last event processed (at a specific date)
-    def get_last_processed_event(self, event_date, system_type):
+    # get the id of the last event processed (of a specific collection)
+    def get_last_processed_event(self, system_type, collection):
         cur = None
         try:
             cur = self.conn.cursor()
-            cur.execute("""SELECT max(event_id) FROM LAST_EVENT where EVENT_DATE = %s and SYSTEM_TYPE_CD = %s""", (event_date, system_type,))
+            cur.execute("""SELECT RECORD_ID, SYSTEM_TYPE_CD, COLLECTION, OBJECT_DATE, ENTRY_DATE
+                           FROM LAST_EVENT where SYSTEM_TYPE_CD = %s and COLLECTION = %s
+                           ORDER BY OBJECT_DATE desc""", (system_type, collection,))
             row = cur.fetchone()
             cur.close()
             cur = None
-            prev_event = row[0]
-            if prev_event is None:
-                prev_event = 0
-            return prev_event
+            event = {}
+            if row is not None:
+                event['RECORD_ID'] = row[0]
+                event['SYSTEM_TYPE_CD'] = row[1]
+                event['COLLECTION'] = row[2]
+                event['OBJECT_DATE'] = row[3]
+                event['ENTRY_DATE'] = row[4]
+            return event
         except (Exception, psycopg2.DatabaseError) as error:
             print(error)
             print(traceback.print_exc())
@@ -311,7 +318,7 @@ class EventProcessor:
         cur = None
         try:
             cur = self.conn.cursor()
-            cur.execute("""SELECT max(event_date) FROM LAST_EVENT where SYSTEM_TYPE_CD = %s""", (system_type,))
+            cur.execute("""SELECT max(object_date) FROM LAST_EVENT where SYSTEM_TYPE_CD = %s""", (system_type,))
             row = cur.fetchone()
             cur.close()
             cur = None
@@ -325,106 +332,34 @@ class EventProcessor:
             if cur is not None:
                 cur.close()
 
-    # insert a record into the "unprocessed corporations" table
-    def insert_corporation(self, system_type, prev_event_id, prev_event_dt, last_event_id, last_event_dt, corp_num):
-        """ insert a new corps into the corps table """
-        sql = """INSERT INTO EVENT_BY_CORP_FILING (SYSTEM_TYPE_CD, PREV_EVENT_ID, PREV_EVENT_DATE, LAST_EVENT_ID, LAST_EVENT_DATE, CORP_NUM, ENTRY_DATE)
-                 VALUES(%s, %s, %s, %s, %s, %s, %s) RETURNING RECORD_ID;"""
-        cur = None
-        try:
-            cur = self.conn.cursor()
-            cur.execute(sql, (system_type, prev_event_id, prev_event_dt, last_event_id, last_event_dt, 
-                                corp_num, datetime.datetime.now(),))
-            _record_id = cur.fetchone()[0]
-            self.conn.commit()
-            cur.close()
-            cur = None
-        except (Exception, psycopg2.DatabaseError) as error:
-            print(error)
-            print(traceback.print_exc())
-            raise
-        finally:
-            if cur is not None:
-                cur.close()
-
-    # insert a list of "unprocessed corporations" into the table
-    def insert_corporation_list(self, corporation_list):
-        """ insert multiple corps into the corps table  """
-        sql = """INSERT INTO EVENT_BY_CORP_FILING (SYSTEM_TYPE_CD, PREV_EVENT_ID, PREV_EVENT_DATE, LAST_EVENT_ID, LAST_EVENT_DATE, CORP_NUM, ENTRY_DATE) 
-                 VALUES(%s, %s, %s, %s, %s)"""
-        cur = None
-        try:
-            cur = self.conn.cursor()
-            cur.executemany(sql, corporation_list)
-            self.conn.commit()
-            cur.close()
-            cur = None
-        except (Exception, psycopg2.DatabaseError) as error:
-            print(error)
-            print(traceback.print_exc())
-            raise
-        finally:
-            if cur is not None:
-                cur.close()
-
-    # update a group of corps into the "unprocessed corp" queue
-    def update_corp_event_queue(self, system_type, corps, max_event_id, max_event_date):
-        sql = """INSERT INTO EVENT_BY_CORP_FILING (SYSTEM_TYPE_CD, PREV_EVENT_ID, PREV_EVENT_DATE, LAST_EVENT_ID, LAST_EVENT_DATE, CORP_NUM, ENTRY_DATE)
-                 VALUES(%s, %s, %s, %s, %s, %s, %s) RETURNING RECORD_ID;"""
-        sql2 = """INSERT INTO LAST_EVENT (SYSTEM_TYPE_CD, EVENT_ID, EVENT_DATE, ENTRY_DATE)
-                 VALUES(%s, %s, %s, %s) RETURNING RECORD_ID;"""
-        cur = None
-        try:
-            for i,corp in enumerate(corps): 
-                cur = self.conn.cursor()
-                cur.execute(sql, (system_type, corp['PREV_EVENT']['event_id'], corp['PREV_EVENT']['event_date'], corp['LAST_EVENT']['event_id'], corp['LAST_EVENT']['event_date'], corp['CORP_NUM'], datetime.datetime.now(),))
-                _record_id = cur.fetchone()[0]
-                cur.close()
-                cur = None
-            cur = self.conn.cursor()
-            cur.execute(sql2, (system_type, max_event_id, max_event_date, datetime.datetime.now(),))
-            self.conn.commit()
-            cur = None
-        except (Exception, psycopg2.DatabaseError) as error:
-            print(error)
-            print(traceback.print_exc())
-            raise
-        finally:
-            if cur is not None:
-                cur.close()
-
     # insert data for one corp into the history table
-    def insert_corp_history(self, system_type, prev_event_json, last_event_json, corp_num, corp_state, corp_json):
+    def insert_inspection_history(self, cur, system_type, collection, project_id, project_name, object_id, object_date, upload_date, upload_hash, process_date=None, process_success=None, process_msg=None):
         """ insert a new corps into the corps table """
-        sql = """INSERT INTO CORP_HISTORY_LOG (SYSTEM_TYPE_CD, PREV_EVENT, LAST_EVENT, CORP_NUM, CORP_STATE, CORP_JSON, ENTRY_DATE)
-                 VALUES(%s, %s, %s, %s, %s, %s, %s) RETURNING RECORD_ID;"""
-        cur = None
-        try:
-            cur = self.conn.cursor()
-            cur.execute(sql, (system_type, prev_event_json, last_event_json, corp_num, corp_state, corp_json, datetime.datetime.now(),))
-            _record_id = cur.fetchone()[0]
-            self.conn.commit()
-            cur.close()
-            cur = None
-        except (Exception, psycopg2.DatabaseError) as error:
-            print(error)
-            print(traceback.print_exc())
-            raise
-        finally:
-            if cur is not None:
-                cur.close()
+        sql = """INSERT INTO EVENT_HISTORY_LOG 
+                 (SYSTEM_TYPE_CD, COLLECTION, PROJECT_ID, PROJECT_NAME, OBJECT_ID, OBJECT_DATE, UPLOAD_DATE, UPLOAD_HASH, ENTRY_DATE,
+                    PROCESS_DATE, PROCESS_SUCCESS, PROCESS_MSG)
+                 VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING RECORD_ID;"""
+        if process_date is None:
+            process_date = datetime.datetime.now()
+        if process_success is None:
+            process_success = 'Y'
+        if process_msg is None:
+            process_msg = ''
+        cur.execute(sql, (system_type, collection, project_id, project_name, object_id, object_date, upload_date, upload_hash, datetime.datetime.now(), process_date, process_success, process_msg))
+        record_id = cur.fetchone()[0]
+        return record_id
 
     # insert a generated JSON credential into our log
-    def insert_json_credential(self, cur, system_cd, cred_type, cred_id, schema_name, schema_version, credential):
+    def insert_json_credential(self, cur, system_cd, cred_type, cred_id, schema_name, schema_version, credential, source_collection=None, source_id=None):
         sql = """INSERT INTO CREDENTIAL_LOG (SYSTEM_TYPE_CD, CREDENTIAL_TYPE_CD, CREDENTIAL_ID, 
-                SCHEMA_NAME, SCHEMA_VERSION, CREDENTIAL_JSON, CREDENTIAL_HASH, ENTRY_DATE)
-                VALUES(%s, %s, %s, %s, %s, %s, %s, %s) RETURNING RECORD_ID;"""
+                SCHEMA_NAME, SCHEMA_VERSION, CREDENTIAL_JSON, CREDENTIAL_HASH, ENTRY_DATE, SOURCE_COLLECTION, SOURCE_ID)
+                VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING RECORD_ID;"""
         # create row(s) for corp creds json info
         cred_json = json.dumps(credential, cls=CustomJsonEncoder, sort_keys=True)
         cred_hash = hashlib.sha256(cred_json.encode('utf-8')).hexdigest()
         try:
             cur.execute("savepoint save_" + cred_type)
-            cur.execute(sql, (system_cd, cred_type, cred_id, schema_name, schema_version, cred_json, cred_hash, datetime.datetime.now(),))
+            cur.execute(sql, (system_cd, cred_type, cred_id, schema_name, schema_version, cred_json, cred_hash, datetime.datetime.now(), source_collection, source_id))
             return 1
         except Exception as e:
             # ignore duplicate hash ("duplicate key value violates unique constraint "cl_hash_index"")
@@ -458,10 +393,11 @@ class EventProcessor:
         return False
 
     # store credentials for the provided corp
-    def store_credentials(self, cur, system_typ_cd, corp_cred):
+    def store_credentials(self, cur, system_typ_cd, corp_cred, source_collection=None, source_id=None):
         cred_count = 0
         cred_count = cred_count + self.insert_json_credential(cur, system_typ_cd, corp_cred['cred_type'], corp_cred['id'], 
-                                                        corp_cred['schema'], corp_cred['version'], corp_cred['credential'])
+                                                        corp_cred['schema'], corp_cred['version'], corp_cred['credential'],
+                                                        source_collection=source_collection, source_id=source_id)
         return cred_count
 
     def build_credential_dict(self, cred_type, schema, version, cred_id, credential):
@@ -515,8 +451,17 @@ class EventProcessor:
         return mdb_inspection
 
 
+    def max_collection_date(self, max_dates, collection, inspection_date):
+        if not collection in max_dates:
+            return inspection_date
+        if inspection_date > max_dates[collection]:
+            return inspection_date
+        return max_dates[collection]
+
+
     def generate_all_credentials(self, obj_tree, save_to_db=True):
         creds = []
+        max_dates = {}
         try:
             # maintain cursor for storing creds in postgresdb
             cur = self.conn.cursor()
@@ -534,13 +479,16 @@ class EventProcessor:
                 # hash of inspections:
                 for inspection_id in site['inspections']:
                     inspection = site['inspections'][inspection_id]
+                    i_d = inspection['inspection']
 
                     # fetch inspection report and issue credential
                     mdb_inspection = self.fetch_mdb_inspection(site, inspection)
                     cred = self.generate_inspection_credential(site, inspection, mdb_inspection)
                     if save_to_db:
-                        self.store_credentials(cur, system_type, cred)
+                        inspection_rec_id = self.insert_inspection_history(cur, system_type, 'Inspection', i_d['PROJECT_ID'], i_d['PROJECT_NAME'], i_d['OBJECT_ID'], i_d['OBJECT_DATE'], i_d['UPLOAD_DATE'], i_d['UPLOAD_HASH'])
+                        self.store_credentials(cur, system_type, cred, source_collection='Inspection', source_id=inspection_rec_id)
                     creds.append(cred)
+                    max_dates['Inspection'] = self.max_collection_date(max_dates, 'Inspection', mdb_inspection['_updated_at'])
 
                     # hash of observations:
                     for observation_id in inspection['observations']:
@@ -565,6 +513,10 @@ class EventProcessor:
             cur.close()
             cur = None
 
+            # record max dates processed
+            for collection in max_dates:
+                self.insert_processed_event(system_type, collection, max_dates[collection])
+                
             return creds
         except (Exception, psycopg2.DatabaseError) as error:
             print(error)
@@ -602,7 +554,7 @@ class EventProcessor:
                     todo_obj['observationId'] = unprocessed['observationId'] if 'observationId' in unprocessed else None
                 if collection != 'Inspection':
                     todo_obj['inspectionId'] = unprocessed['inspectionId'] if 'inspectionId' in unprocessed else None
-                todo_obj['COLLECTION_TYPE'] = collection
+                todo_obj['COLLECTION'] = collection
                 todo_obj['OBJECT_ID'] = unprocessed['_id']
                 todo_obj['OBJECT_DATE'] = unprocessed['_updated_at']
                 todo_obj['UPLOAD_DATE'] = unprocessed['_uploaded_at'] if '_uploaded_at' in unprocessed else None
@@ -611,7 +563,7 @@ class EventProcessor:
 
         # fill in project info for all items
         for unprocessed_object in unprocessed_objects:
-            if unprocessed_object['COLLECTION_TYPE'] != 'Inspection' and 'inspectionId' in unprocessed_object:
+            if unprocessed_object['COLLECTION'] != 'Inspection' and 'inspectionId' in unprocessed_object:
                 inspection = self.mdb_db['Inspection'].find_one( { '_id' : unprocessed_object['inspectionId'] } );
                 if inspection is not None:
                     unprocessed_object['PROJECT_ID'] = inspection['project']
@@ -633,7 +585,7 @@ class EventProcessor:
                     site_object['inspections'] = {}
                 organized_objects[row['PROJECT_ID']] = site_object
 
-                if row['COLLECTION_TYPE'] == 'Inspection':
+                if row['COLLECTION'] == 'Inspection':
                     inspection_id = row['OBJECT_ID']
                 elif 'inspectionId' in row:
                     inspection_id = row['inspectionId']
@@ -647,12 +599,12 @@ class EventProcessor:
                         inspct_object = {}
                         inspct_object['OBJECT_ID'] = inspection_id
                         inspct_object['observations'] = {}
-                    if row['COLLECTION_TYPE'] == 'Inspection':
+                    if row['COLLECTION'] == 'Inspection':
                         inspct_object['inspection'] = row
                     site_object['inspections'][inspection_id] = inspct_object
 
-                    if row['COLLECTION_TYPE'] != 'Inspection':
-                        if row['COLLECTION_TYPE'] == 'Observation':
+                    if row['COLLECTION'] != 'Inspection':
+                        if row['COLLECTION'] == 'Observation':
                             observation_id = row['OBJECT_ID']
                         else:
                             observation_id = row['observationId']
@@ -665,19 +617,19 @@ class EventProcessor:
                             obsrv_object['audios'] = {}
                             obsrv_object['photos'] = {}
                             obsrv_object['videos'] = {}
-                        if row['COLLECTION_TYPE'] == 'Observation':
+                        if row['COLLECTION'] == 'Observation':
                             obsrv_object['observation'] = row
                         inspct_object['observations'][observation_id] = obsrv_object
 
-                        if row['COLLECTION_TYPE'] != 'Observation':
-                            if row['OBJECT_ID'] in obsrv_object[row['COLLECTION_TYPE']]:
-                                media_object = obsrv_object[row['COLLECTION_TYPE']][row['OBJECT_ID']]
+                        if row['COLLECTION'] != 'Observation':
+                            if row['OBJECT_ID'] in obsrv_object[row['COLLECTION']]:
+                                media_object = obsrv_object[row['COLLECTION']][row['OBJECT_ID']]
                             else:
                                 media_object = {}
                                 media_object['OBJECT_ID'] = row['OBJECT_ID']
-                                media_object['media_type'] = row['COLLECTION_TYPE']
+                                media_object['media_type'] = row['COLLECTION']
                             media_object['media'] = row
-                            obsrv_object[row['COLLECTION_TYPE']][row['OBJECT_ID']] = media_object
+                            obsrv_object[row['COLLECTION']][row['OBJECT_ID']] = media_object
 
         return organized_objects
 
