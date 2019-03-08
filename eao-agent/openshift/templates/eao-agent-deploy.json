@@ -130,10 +130,6 @@
                   "value": "${ENVIRONMENT}"
                 },
                 {
-                  "name": "ENABLE_GUNICORN",
-                  "value": "${ENABLE_GUNICORN}"
-                },
-                {
                   "name": "INDY_GENESIS_URL",
                   "value": "${INDY_GENESIS_URL}"
                 },
@@ -148,14 +144,6 @@
                 {
                   "name": "AUTO_REGISTER_DID",
                   "value": "${AUTO_REGISTER_DID}"
-                },
-                {
-                  "name": "FORMS",
-                  "value": "${FORMS}"
-                },
-                {
-                  "name": "ISSUERS",
-                  "value": "${ISSUERS}"
                 },
                 {
                   "name": "LOG_LEVEL",
@@ -385,13 +373,6 @@
       "value": "default"
     },
     {
-      "name": "ENABLE_GUNICORN",
-      "displayName": "Enable gunicorn",
-      "description": "A flag to indicate whether or not to use the gunicorn server.",
-      "required": true,
-      "value": "0"
-    },
-    {
       "name": "INDY_GENESIS_URL",
       "displayName": "Genesis Url",
       "description": "URL for downloading a copy of the genesis file defining the ledger connection for the environment.  Used when connecting the the Sovrin Ledger.",
@@ -418,20 +399,6 @@
       "description": "Flag to indicate whether or not to auto-register with the ledger.  Only works with the BCovrin, which has an endpoint for self registration.",
       "required": false,
       "value": "1"
-    },
-    {
-      "name": "FORMS",
-      "displayName": "Forms",
-      "description": "Forms.",
-      "required": false,
-      "value": ""
-    },
-    {
-      "name": "ISSUERS",
-      "displayName": "Issuers",
-      "description": "Issuers.",
-      "required": false,
-      "value": ""
     },
     {
       "name": "LOG_LEVEL",

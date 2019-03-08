@@ -1,7 +1,7 @@
 # von-x
 
 This project demonstrates basic application for deploying the [VON-X](https://github.com/PSPC-SPAC-buyandsell/von-x) library, in order to enable issuer registration and credential submission to [TheOrgBook](https://github.com/bcgov/TheOrgBook).
-It includes Docker tooling for deployment of the application on gunicorn, behind a Caddy reverse proxy.
+It includes Docker tooling for deployment of the application, behind a Caddy reverse proxy.
 
 To support this application you will need a local `von-network` instance as well as a compatible version of TheOrgBook running.
 See the [Quick-Start Guide](https://github.com/bcgov/TheOrgBook/blob/master/docker/README.md#running-a-complete-provisional-von-network) for details.

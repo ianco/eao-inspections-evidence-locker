@@ -17,7 +17,7 @@
 #pylint: disable=broad-except,ungrouped-imports
 
 """
-Standard entry point for the application (non-gunicorn)
+Standard entry point for the application
 """
 
 import logging
