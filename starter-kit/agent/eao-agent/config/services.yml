@@ -15,7 +15,7 @@ issuers:
       sign_target: false
 
     wallet:
-      name: ${POSTGRESQL_WALLET_NAME:-myorg_issuer}
+      name: ${POSTGRESQL_WALLET_NAME:-evlockr_issuer}
       seed: $WALLET_SEED_VONX
       type: $WALLET_TYPE
       params:

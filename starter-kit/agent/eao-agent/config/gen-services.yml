@@ -1,5 +1,5 @@
 issuers:
-  myorg:
+  evlockr:
     credential_types:
     - description: The core site credential issued by EAO Evidence Locker
       schema: inspection-site.eao-evidence-locker

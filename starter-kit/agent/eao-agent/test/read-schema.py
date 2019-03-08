@@ -151,8 +151,8 @@ with open(in_file, 'r') as stream:
 
         services = bare_dict()
         add_dict(services, 'issuers')
-        services['issuers']['myorg'] = bare_dict()
-        services['issuers']['myorg']['credential_types'] = bare_array()
+        services['issuers']['evlockr'] = bare_dict()
+        services['issuers']['evlockr']['credential_types'] = bare_array()
         routes = bare_dict()
         routes['forms'] = bare_dict()
         testdata = bare_array()
@@ -243,7 +243,7 @@ with open(in_file, 'r') as stream:
                     model['fields']['value']['from'] = 'claim'
                     service['mapping'].append(model)
 
-            services['issuers']['myorg']['credential_types'].append(service)
+            services['issuers']['evlockr']['credential_types'].append(service)
 
             # generate schema-level stuff for routes.yml
             form_name = path_to_name(schema['path'])
