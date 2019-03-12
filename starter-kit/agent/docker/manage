@@ -85,8 +85,8 @@ configureEnvironment () {
   # agent
   export WEB_HTTP_PORT=5001
   export WEB_HOST_PORT=8081
-  export COMPOSE_PROJECT_NAME=myorg
-  export COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT_NAME:-"myorg"}
+  export COMPOSE_PROJECT_NAME=evlockr
+  export COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT_NAME:-"evlockr"}
   export LEDGER_URL=${LEDGER_URL-http://$DOCKERHOST:9000}
   export APPLICATION_URL=${APPLICATION_URL-http://localhost:${WEB_HTTP_PORT:-5001}}
   export ENDPOINT_URL=http://${ENDPOINT_HOST-$DOCKERHOST:${WEB_HTTP_PORT:-5001}}
@@ -112,7 +112,7 @@ configureEnvironment () {
   export POSTGRESQL_PASSWORD="DB_PASSWORD"
   export WALLET_TYPE="postgres_storage"
   export WALLET_ENCRYPTION_KEY="key"
-  export POSTGRESQL_WALLET_HOST="myorg-wallet-db"
+  export POSTGRESQL_WALLET_HOST="evlockr-wallet-db"
   export POSTGRESQL_WALLET_PORT="5432"
   export POSTGRESQL_ADMIN_USER="postgres"
   export POSTGRESQL_ADMIN_PASSWORD="mysecretpassword"

@@ -170,9 +170,9 @@ class AgentHandler:
 
         if corp_num is not None and corp_num == "goto":
             print("Redirecting :-D")
-            location = request.app.router['myorg-issue'].url_for()
+            location = request.app.router['evlockr-issue'].url_for()
             raise web.HTTPFound(location=location)
-            #return web.Response(status=307, headers={'location': "/myorg/myorg-credential",},) 
+            #return web.Response(status=307, headers={'location': "/evlockr/evlockr-credential",},) 
         else:
             print("Go to page ", tpl_name)
             response = aiohttp_jinja2.render_template(tpl_name, request, tpl_vars)

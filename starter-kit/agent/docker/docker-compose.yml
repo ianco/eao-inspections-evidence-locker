@@ -14,16 +14,16 @@ services:
       AGENT_HOST: ${AGENT_HOST:-agent}
       AGENT_PORT: ${AGENT_PORT:-8000}
     links:
-      - myorg-agent:agent
+      - evlockr-agent:agent
     networks:
-      - myorg
+      - evlockr
     ports:
       - ${WEB_HTTP_PORT:-5000}:${WEB_HOST_PORT:-8080}
     volumes:
       - caddyx-data:/root/.caddy
       - caddyx-logs:/srv/logs
 
-  myorg-agent:
+  evlockr-agent:
     build:
       context: ../eao-agent
       dockerfile: Dockerfile
@@ -32,10 +32,7 @@ services:
       ENDPOINT_URL: ${ENDPOINT_URL:-http://localhost:5001}
       CONFIG_ROOT: ../config
       ENVIRONMENT: ${ENVIRONMENT:-default}
-      ENABLE_GUNICORN: ${ENABLE_GUNICORN:-0}
       INDY_LEDGER_URL: ${LEDGER_URL:-http://localhost:9000}
-      FORMS: ${FORMS:-}
-      ISSUERS: ${ISSUERS:-}
       LOG_LEVEL: ${LOG_LEVEL:-}
       PYTHON_ENV: ${PYTHON_ENV:-development}
       TOB_API_URL: ${TOB_API_URL:-}
@@ -52,18 +49,18 @@ services:
       HTTP_FORCE_CLOSE_CONNECTIONS: "true"
     networks:
       - orgbook
-      - myorg
+      - evlockr
     depends_on:
-      - myorg-wallet-db
+      - evlockr-wallet-db
     entrypoint: >
       /bin/bash -c "
         echo sleeping ...;
         sleep 5;
         ../docker-entrypoint.sh;"
     volumes:
-      - myorg-agent-wallet:/home/indy/.indy_client/wallet
+      - evlockr-agent-wallet:/home/indy/.indy_client/wallet
 
-  myorg-wallet-db:
+  evlockr-wallet-db:
     image: registry.access.redhat.com/rhscl/postgresql-95-rhel7:9.5
     environment:
       - POSTGRESQL_USER=${POSTGRESQL_USER}
@@ -72,18 +69,18 @@ services:
       - POSTGRESQL_ADMIN_PASSWORD=${POSTGRESQL_ADMIN_PASSWORD}
     networks:
       - orgbook
-      - myorg
+      - evlockr
     ports:
       - 5435:5432
     volumes:
-      - myorg-wallet-db:/var/lib/pgsql/data
+      - evlockr-wallet-db:/var/lib/pgsql/data
 
   von-mara:
     build:
       context: ../eao-pipeline
       dockerfile: docker/mara-app/Dockerfile
     environment:
-      - VONX_API_URL=${VONX_API_URL:-http://myorg-agent:8000/eao-evidence-locker}
+      - VONX_API_URL=${VONX_API_URL:-http://evlockr-agent:8000/eao-evidence-locker}
       # [eao mongo database]
       - EAO_MDB_DB_HOST=${EAO_MDB_DB_HOST:-mongo}
       - EAO_MDB_DB_PORT=${EAO_MDB_DB_PORT:-27017}
@@ -102,7 +99,7 @@ services:
       - MARA_DB_DATABASE=${MARA_DB_DATABASE:-mara_db}
       - MARA_DB_USER=${MARA_DB_USER:-mara_db}
     networks:
-      - myorg
+      - evlockr
     ports:
       - 5050:5000
     depends_on:
@@ -123,7 +120,7 @@ services:
       - POSTGRESQL_PASSWORD=${POSTGRESQL_PASSWORD}
       - POSTGRESQL_DATABASE=${POSTGRESQL_DATABASE}
     networks:
-      - myorg
+      - evlockr
     ports:
       #- 5432:5432
       - 5444:5432
@@ -137,7 +134,7 @@ services:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: example
     networks:
-      - myorg
+      - evlockr
     ports:
       - 27017:27017
     volumes:
@@ -146,13 +143,13 @@ services:
 volumes:
   caddyx-data:
   caddyx-logs:
-  myorg-agent-wallet:
-  myorg-wallet-db:
+  evlockr-agent-wallet:
+  evlockr-wallet-db:
   mara-data:
   mongo-data:
 
 networks:
-  myorg:
+  evlockr:
   orgbook:
     external:
       name: tob_tob
