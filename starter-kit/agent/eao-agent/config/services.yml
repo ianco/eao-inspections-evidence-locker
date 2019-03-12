@@ -48,7 +48,6 @@ issuers:
       mapping:
       - model: name
         fields:
-        fields:
           text:
             input: project_name
             from: claim
