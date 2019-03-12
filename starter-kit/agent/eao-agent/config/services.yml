@@ -4,8 +4,8 @@ issuers:
   eao-evidence-locker:
     name: EAO Evidence Locker
     abbreviation: eao-evidence-locker
-    url: https://www.eao-evidence-locker.ca/eao-evidence-locker-info-page
-    email: info@eao-evidence-locker.ca
+    url: https://www2.gov.bc.ca/gov/content/environment/natural-resource-stewardship/environmental-assessments
+    email: eaoinfo@gov.bc.ca
     logo_path: ../assets/img/eao-evidence-locker-logo.jpg
     endpoint: $ENDPOINT_URL
 
