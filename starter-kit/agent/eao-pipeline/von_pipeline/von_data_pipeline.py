@@ -7,14 +7,14 @@ import mara_db.dbs
 import data_integration
 import data_integration.config
 from mara_app.monkey_patch import patch
-from von_pipeline.von_data_pipelines import von_data_root_pipeline
+from von_pipeline.von_pipelines import von_root_pipeline
 
 
 patch(data_integration.config.system_statistics_collection_period)(lambda: 15)
 
 @patch(data_integration.config.root_pipeline)
 def root_pipeline():
-    return von_data_root_pipeline()
+    return von_root_pipeline()
 
 mara_host = os.environ.get('MARA_DB_HOST', 'von-pipeline-db')
 mara_database = os.environ.get('MARA_DB_DATABASE', 'mara_db')

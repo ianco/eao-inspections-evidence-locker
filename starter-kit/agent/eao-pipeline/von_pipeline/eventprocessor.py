@@ -19,15 +19,15 @@ EAO_SYSTEM_TYPE = 'EAO_EL'
 
 site_credential = 'SITE'
 site_schema = 'inspection-site.eao-evidence-locker'
-site_version = '1.0.0'
+site_version = '1.0.1'
 
 inspc_credential = 'INSPC'
 inspc_schema = 'safety-inspection.eao-evidence-locker'
-inspc_version = '1.0.0'
+inspc_version = '1.0.1'
 
 obsvn_credential = 'OBSVN'
 obsvn_schema = 'inspection-document.eao-evidence-locker'
-obsvn_version = '1.0.0'
+obsvn_version = '1.0.1'
 
 MDB_COLLECTIONS = ['Inspection','Observation','Audio','Photo','Video']
 MDB_OBJECT_DATE = '_updated_at'
