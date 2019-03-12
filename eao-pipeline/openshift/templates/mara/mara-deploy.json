@@ -281,7 +281,7 @@
       "displayName": "VON-X API URL",
       "description": "VON-X API URL.",
       "required": true,
-      "value": "http://eao-agent:8080/inspections-locker"
+      "value": "http://eao-agent:8080/eao-evidence-locker"
     },
     {
       "name": "BC_REG_DB_HOST",
@@ -345,6 +345,41 @@
       "description": "Mara Database Name.",
       "required": true,
       "value": "mara_db"
+    },
+    {
+      "name": "EAO_MDB_DB_HOST",
+      "displayName": "MongoDB Host",
+      "description": "The host for the parse-server MongoDB database.",
+      "required": true,
+      "value": "parse-mongodb"
+    },
+    {
+      "name": "EAO_MDB_DB_PORT",
+      "displayName": "MongoDB port",
+      "description": "The parse-server MongoDB database port.",
+      "required": true,
+      "value": "27017"
+    },
+    {
+      "name": "EAO_MDB_DB_DATABASE",
+      "displayName": "MongoDB Database",
+      "description": "The parse-server MongoDB database name.",
+      "required": true,
+      "value": "parse"
+    },
+    {
+      "name": "EAO_MDB_DB_USER",
+      "displayName": "MongoDB User",
+      "description": "The parse-server MongoDB database user name.",
+      "required": true,
+      "value": "user"
+    },
+    {
+      "name": "EAO_MDB_DB_PASSWORD",
+      "displayName": "MongoDB password",
+      "description": "The parse-server MongoDB database password.",
+      "required": true,
+      "value": "password"
     },
     {
       "name": "START_CRON",
