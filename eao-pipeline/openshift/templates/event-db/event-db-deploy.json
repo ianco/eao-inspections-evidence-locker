@@ -262,7 +262,7 @@
       "displayName": "PostgreSQL Database Name",
       "description": "The name of the PostgreSQL database.",
       "required": true,
-      "value": "evidence_locker_db"
+      "value": "eao_locker_db"
     },
     {
       "name": "POSTGRESQL_USER",
