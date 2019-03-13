@@ -161,12 +161,13 @@ node {
             openshift.tag("${IMAGESTREAM_NAME}@${IMAGE_HASH}", "${IMAGESTREAM_NAME}:${TAG_NAMES[0]}")
           }
 
-          openshift.withProject("${DEV_NAME_SPACE}") {
-              def dc = openshift.selector('dc', "${DEPLOYMENT_CONFIG_NAME}")
+          // we don't surrently have a dev environment
+          // openshift.withProject("${DEV_NAME_SPACE}") {
+          //     def dc = openshift.selector('dc', "${DEPLOYMENT_CONFIG_NAME}")
               // Wait for the deployment to complete.
               // This will wait until the desired replicas are all available
-              dc.rollout().status()
-          }
+          //     dc.rollout().status()
+          // }
 
           echo "Deployment Complete."
         }
