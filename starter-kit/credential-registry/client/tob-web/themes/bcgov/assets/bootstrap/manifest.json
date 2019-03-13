@@ -1,6 +1,6 @@
 {
-    "name": "OrgBook BC",
-    "short_name": "OrgBook BC",
+    "name": "EAO Evidence Locker",
+    "short_name": "EAO Evidence Locker",
     "icons": [
         {
             "src": "${APPLICATION_URL}/assets/bootstrap/bcid-192x192.png",
