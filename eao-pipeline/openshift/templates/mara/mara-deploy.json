@@ -113,36 +113,6 @@
                     "value": "${VONX_API_URL}"
                   },
                   {
-                    "name": "BC_REG_DB_HOST",
-                    "value": "${BC_REG_DB_HOST}"
-                  },
-                  {
-                    "name": "BC_REG_DB_PORT",
-                    "value": "${BC_REG_DB_PORT}"
-                  },
-                  {
-                    "name": "EAO_EVIDENCE_LOCKER_DB",
-                    "value": "${EAO_EVIDENCE_LOCKER_DB}"
-                  },
-                  {
-                    "name": "BC_REG_DB_USER",
-                    "valueFrom": {
-                      "secretKeyRef": {
-                        "name": "${BC_REG_DB_HOST}",
-                        "key": "database-user"
-                      }
-                    }
-                  },
-                  {
-                    "name": "BC_REG_DB_PASSWORD",
-                    "valueFrom": {
-                      "secretKeyRef": {
-                        "name": "${BC_REG_DB_HOST}",
-                        "key": "database-password"
-                      }
-                    }
-                  },
-                  {
                     "name": "EVENT_PROC_DB_HOST",
                     "value": "${EVENT_PROC_DB_HOST}"
                   },
@@ -205,6 +175,26 @@
                   {
                     "name": "START_CRON",
                     "value": "${START_CRON}"
+                  },
+                  {
+                    "name": "EAO_MDB_DB_HOST",
+                    "value": "${EAO_MDB_DB_HOST}"
+                  },
+                  {
+                    "name": "EAO_MDB_DB_PORT",
+                    "value": "${EAO_MDB_DB_PORT}"
+                  },
+                  {
+                    "name": "EAO_MDB_DB_DATABASE",
+                    "value": "${EAO_MDB_DB_DATABASE}"
+                  },
+                  {
+                    "name": "EAO_MDB_DB_USER",
+                    "value": "${EAO_MDB_DB_USER}"
+                  },
+                  {
+                    "name": "EAO_MDB_DB_PASSWORD",
+                    "value": "${EAO_MDB_DB_PASSWORD}"
                   }
                 ],
                 "readinessProbe": {
@@ -282,27 +272,6 @@
       "description": "VON-X API URL.",
       "required": true,
       "value": "http://eao-agent:8080/eao-evidence-locker"
-    },
-    {
-      "name": "BC_REG_DB_HOST",
-      "displayName": "EAO Inspections Evidence Locker Database Host",
-      "description": "EAO Inspections Evidence Locker Database Host.",
-      "required": true,
-      "value": "postgresql"
-    },
-    {
-      "name": "BC_REG_DB_PORT",
-      "displayName": "EAO Inspections Evidence Locker Database Port",
-      "description": "EAO Inspections Evidence Locker Database Port.",
-      "required": true,
-      "value": "5432"
-    },
-    {
-      "name": "EAO_EVIDENCE_LOCKER_DB",
-      "displayName": "EAO Inspections Evidence Locker Database Name",
-      "description": "EAO Inspections Evidence Locker Database Name.",
-      "required": true,
-      "value": "EAO_EVIDENCE_LOCKER"
     },
     {
       "name": "EVENT_PROC_DB_HOST",
