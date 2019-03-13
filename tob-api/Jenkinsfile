@@ -106,21 +106,21 @@ node {
       }
     }
 
-    stage("Update ${SCHEMA_SPY_IMAGSTREAM_NAME} instance in ${TAG_NAMES[0]}") {
-      script {
-        openshift.withCluster() {
-          openshift.withProject("${PROJECT_NAMESPACE}${TAG_NAMES[0]}") {
+    // stage("Update ${SCHEMA_SPY_IMAGSTREAM_NAME} instance in ${TAG_NAMES[0]}") {
+    //   script {
+    //     openshift.withCluster() {
+    //       openshift.withProject("${PROJECT_NAMESPACE}${TAG_NAMES[0]}") {
 
-              // For this to work the Jenkins service mush have edit permissions within the deployment project.
-              // Example OC cmd to accomplish this task (it's better if you have projet init scripts that do this);
-              // oc policy add-role-to-user edit system:serviceaccount:eao-iuc-tools:jenkins -n eao-iuc-dev
-              def dc = openshift.selector('dc', "${SCHEMA_SPY_IMAGSTREAM_NAME}")
-              dc.scale("--replicas=0")
-              dc.scale("--replicas=1")
-          }
-        }
-      }
-    }
+    //           // For this to work the Jenkins service mush have edit permissions within the deployment project.
+    //           // Example OC cmd to accomplish this task (it's better if you have projet init scripts that do this);
+    //           // oc policy add-role-to-user edit system:serviceaccount:eao-iuc-tools:jenkins -n eao-iuc-dev
+    //           def dc = openshift.selector('dc', "${SCHEMA_SPY_IMAGSTREAM_NAME}")
+    //           dc.scale("--replicas=0")
+    //           dc.scale("--replicas=1")
+    //       }
+    //     }
+    //   }
+    // }
   }
   else {
     stage('No Changes') {
