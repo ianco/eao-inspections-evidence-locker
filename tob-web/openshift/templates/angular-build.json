@@ -40,6 +40,10 @@
               {
                 "name": "TOB_THEME",
                 "value": "${TOB_THEME}"
+              },
+              {
+                "name": "TOB_THEME_PATH",
+                "value": "${TOB_THEME_PATH}"
               }
             ]
           }
@@ -101,9 +105,15 @@
     },
     {
       "name": "TOB_THEME",
-      "displayName": "TheOrgBook Theme Name",
+      "displayName": "Evidence Locker Theme Name",
       "description": "The name of the theme to be used for the site.",
-      "value": "default"
+      "value": "bcgov"
+    },
+    {
+      "name": "TOB_THEME_PATH",
+      "displayName": "Evidence Locker Theme Path",
+      "description": "The path of the theme to be used for the site.",
+      "value": "src/themes"
     },
     {
       "name": "CPU_LIMIT",
