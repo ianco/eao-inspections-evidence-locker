@@ -12,8 +12,7 @@ def APP_NAMES = [
   'eao-agent',
   'schema-spy',
   'solr',
-  'angular-on-nginx',
-  'backup'
+  'angular-on-nginx'
   ]
 
 node {
