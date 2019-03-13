@@ -27,9 +27,6 @@ def DEPLOYMENT_CONFIG_NAME= 'angular-on-nginx'
 // The namespace of you dev deployment environment.
 def DEV_NAME_SPACE = 'eao-iuc-dev'
 
-// The name of the theme to be used when building the app, and the directory where the theme is stored
-def TOB_THEME = "bcgov"
-
 // The repository and branch to checkout for the build
 def TOB_SOURCE_REPO = "https://github.com/bcgov/eao-inspections-evidence-locker.git"
 def TOB_SOURCE_REPO_BRANCH = "master"
@@ -97,24 +94,16 @@ node {
     stage('Prepare Theme') {
       echo "Preparing custom theme ..."
 
-      sh 'cp -rf ./starter-kit/credential-registry/client/tob-web/themes/bcgov ./credential-registry/client/tob-web/src/themes/'
+      sh 'cp -r ./starter-kit/credential-registry/client/tob-web/themes/bcgov ./credential-registry/client/tob-web/src/themes/'
     }
 
     stage("Build ${BUILD_CONFIG}") {
-      withEnv([
-        "TOB_THEME = ${TOB_THEME}"
-      ])
-      {
-        script {
-          openshift.withCluster() {
-            openshift.withProject() {
-              // set environment variables to customize theme used for build
-              openshift.set("env bc/${BUILD_CONFIG} TOB_THEME=${TOB_THEME}")
-
-              echo "Building the application artifacts ..."
-              def build = openshift.selector("bc", "${BUILD_CONFIG}")
-              build.startBuild("--from-dir='./credential-registry/client/tob-web'").logs("-f")
-            }
+      script {
+        openshift.withCluster() {
+          openshift.withProject() {
+            echo "Building the application artifacts ..."
+            def build = openshift.selector("bc", "${BUILD_CONFIG}")
+            build.startBuild("--from-dir='./credential-registry/client/tob-web'").logs("-f")
           }
         }
       }
