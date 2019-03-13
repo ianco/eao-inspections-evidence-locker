@@ -28,14 +28,6 @@
           }
         ],
         "runPolicy": "Serial",
-        "source": {
-          "type": "Git",
-          "contextDir": "${SOURCE_CONTEXT_DIR}",
-          "git": {
-            "uri": "${GIT_REPO_URL}",
-            "ref": "${GIT_REF}"
-          }
-        },
         "strategy": {
           "type": "Source",
           "sourceStrategy": {
@@ -85,27 +77,6 @@
       "description": "The tag given to the built image.",
       "required": true,
       "value": "latest"
-    },
-    {
-      "name": "GIT_REPO_URL",
-      "displayName": "GIT Source Repo URL",
-      "description": "A GIT URL to your source code.",
-      "required": true,
-      "value": "https://github.com/esune/eao-inspections-evidence-locker.git"
-    },
-    {
-      "name": "GIT_REF",
-      "displayName": "Git Reference",
-      "description": "The git reference or branch.",
-      "required": true,
-      "value": "master"
-    },
-    {
-      "name": "SOURCE_CONTEXT_DIR",
-      "displayName": "Source Context Directory",
-      "description": "The source context directory.",
-      "required": false,
-      "value": "credential-registry/client/tob-web"
     },
     {
       "name": "SOURCE_IMAGE_NAMESPACE",
