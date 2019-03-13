@@ -97,7 +97,7 @@ node {
     stage('Prepare Theme') {
       echo "Preparing custom theme ..."
 
-      sh 'cp -rf ./starter-kit/credential-registry/client/tob-web/themes/bcgov ./credential-registry/client/tob-web/src/themes/'
+      sh 'cp -rv ./starter-kit/credential-registry/client/tob-web/themes/bcgov ./credential-registry/client/tob-web/src/themes/'
     }
 
     stage("Build ${BUILD_CONFIG}") {
