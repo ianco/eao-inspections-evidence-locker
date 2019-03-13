@@ -113,7 +113,7 @@ node {
 
               echo "Building the application artifacts ..."
               def build = openshift.selector("bc", "${BUILD_CONFIG}")
-              build.startBuild("--from-dir='.'").logs("-f")
+              build.startBuild("--from-dir='./credential-registry/client/tob-web'").logs("-f")
             }
           }
         }
