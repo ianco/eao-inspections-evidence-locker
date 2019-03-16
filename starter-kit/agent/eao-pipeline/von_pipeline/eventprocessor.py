@@ -1,19 +1,22 @@
 #!/usr/bin/python
  
-import psycopg2
-from pymongo import MongoClient, ASCENDING
-from bson.objectid import ObjectId
 import datetime
-import pytz
+import decimal
+import hashlib
 import json
 import time
-import decimal
-import random
-import hashlib
-import types
 import traceback
-from von_pipeline.config import config
+import types
+from enum import Enum
 
+import pytz
+
+import pipeline_utils
+import psycopg2
+from bson import json_util
+from bson.objectid import ObjectId
+from pymongo import ASCENDING, MongoClient
+from von_pipeline.config import config
 
 EAO_SYSTEM_TYPE = 'EAO_EL'
 
@@ -583,7 +586,7 @@ class EventProcessor:
 
         # TODO for now just look at the Investigations collection ...
         # TODO if necessary fetch other collections as well
-        for collection in [MDB_COLLECTIONS[0],]:
+        for collection in MDB_COLLECTIONS:
             # find last processed date for this collection
             last_event = self.get_last_processed_event(EAO_SYSTEM_TYPE, collection)
 
@@ -603,16 +606,16 @@ class EventProcessor:
                     todo_obj['PROJECT_NAME'] = unprocessed['project']
                 elif collection == 'Observation':
                     todo_obj['observationId'] = unprocessed['_id']
-                else:
-                    todo_obj['observationId'] = unprocessed['observationId'] if 'observationId' in unprocessed else None
-                if collection != 'Inspection':
                     todo_obj['inspectionId'] = unprocessed['inspectionId'] if 'inspectionId' in unprocessed else None
                     todo_obj['_p_inspection'] = unprocessed['_p_inspection'] if '_p_inspection' in unprocessed else None
+                else:
+                    # Photo, Audio, Video
+                    todo_obj['observationId'] = unprocessed['observationId'] if 'observationId' in unprocessed else None
+                    todo_obj['_p_observation'] = unprocessed['_p_observation'] if '_p_observation' in unprocessed else None
                 todo_obj['COLLECTION'] = collection
                 todo_obj['OBJECT_ID'] = unprocessed['_id']
                 todo_obj['OBJECT_DATE'] = unprocessed[MDB_OBJECT_DATE]
-                todo_obj['UPLOAD_DATE'] = unprocessed['_uploaded_at'] if '_uploaded_at' in unprocessed else None
-                todo_obj['UPLOAD_HASH'] = unprocessed['_uploaded_hash'] if '_uploaded_hash' in unprocessed else None
+                todo_obj['UPLOAD_DATE'] = unprocessed[MDB_OBJECT_DATE]
                 unprocessed_objects.append(todo_obj)
 
         # fill in project info for all items
@@ -706,13 +709,20 @@ class EventProcessor:
         mongo_rows = self.find_unprocessed_objects()
         print("Row count = ", len(mongo_rows))
 
+        # add hashes to inspections, observations, media
+        hashed_rows = pipeline_utils.add_record_hashes(mongo_rows)
+
         # organize by project/inspection/observation
-        mongo_objects = self.organize_unprocessed_objects(mongo_rows)
+        mongo_objects = self.organize_unprocessed_objects(hashed_rows)
         print("Object count = ", len(mongo_objects))
 
         # generate and save credentials
-        creds = self.generate_all_credentials(mongo_objects)
+        creds = self.generate_all_credentials(mongo_objects, False)
         print("Generated cred count = ", len(creds))
+
+
+        
+
 
 
     # main entry point for processing status job
@@ -795,5 +805,3 @@ class EventProcessor:
             if cursor is not None:
                 cursor.close()
             cursor = None
-
-
