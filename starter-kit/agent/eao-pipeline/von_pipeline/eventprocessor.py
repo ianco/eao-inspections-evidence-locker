@@ -676,10 +676,8 @@ class EventProcessor:
         mongo_objects = self.organize_unprocessed_objects(hashed_rows)
         print("Object count = ", len(mongo_objects))
 
-        print(mongo_objects)
-
         # generate and save credentials
-        creds = self.generate_all_credentials(mongo_objects, False)
+        creds = self.generate_all_credentials(mongo_objects)
         print("Generated cred count = ", len(creds))
 
 
