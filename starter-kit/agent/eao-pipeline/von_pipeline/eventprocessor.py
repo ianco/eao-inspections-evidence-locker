@@ -463,6 +463,8 @@ class EventProcessor:
         inspection_cred['updated_date'] = mdb_inspection['_updated_at']
         inspection_cred['hash_value'] = mdb_inspection['_uploaded_hash'] if '_uploaded_hash' in mdb_inspection else None
         inspection_cred['effective_date'] = mdb_inspection['_updated_at']
+        inspection_cred['inspector_name'] = mdb_inspection['inspector_name']
+        inspection_cred['inspector_email'] = mdb_inspection['inspector_email']
 
         return self.build_credential_dict(inspc_credential, inspc_schema, inspc_version, 
                                           str(inspection_cred['project_id']) +':' + str(inspection_cred['inspection_id']), 
@@ -472,6 +474,7 @@ class EventProcessor:
     # get all inspection info from mongo db
     def fetch_mdb_inspection(self, site, inspection):
         mdb_inspection = self.mdb_db['Inspection'].find_one( {'_id' : inspection['OBJECT_ID']} )
+        mdb_inspector = self.mdb_db['_User'].find_one( {'_id' : mdb_inspection['userId']} )
         mdb_observations = self.mdb_db['Observation'].find( {'inspectionId' : inspection['OBJECT_ID']} )
         for mdb_observation in mdb_observations:
             mdb_audios = self.mdb_db['Audio'].find_one( {'observationId' : mdb_observation['_id']} )
@@ -481,8 +484,11 @@ class EventProcessor:
             mdb_observation['Photo'] = mdb_photos
             mdb_observation['Video'] = mdb_videos
         mdb_inspection['Observation'] = mdb_observations
+        mdb_inspection['inspector_name'] = mdb_inspector['firstName'] + ' ' + mdb_inspector['lastName']
+        mdb_inspection['inspector_email'] = mdb_inspector['publicEmail']
 
         return mdb_inspection
+
 
 
     def max_collection_date(self, max_dates, collection, inspection_date):

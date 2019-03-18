@@ -108,10 +108,18 @@ issuers:
       - model: attribute
         fields:
           type:
-            input: team_id
+            input: inspector_name
             from: value
           value:
-            input: team_id
+            input: inspector_name
+            from: claim
+      - model: attribute
+        fields:
+          type:
+            input: inspector_email
+            from: value
+          value:
+            input: inspector_email
             from: claim
       - model: attribute
         fields:

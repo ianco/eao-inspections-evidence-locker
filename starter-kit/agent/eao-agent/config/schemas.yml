@@ -55,8 +55,13 @@
       # one of: ui_name, ui_address, ui_text, ui_date, ui_select, helper_uuid, helper_now_iso, helper_value
       data_type: ui_text
       required: true
-    team_id:
-      description: ID of the inspecting team
+    inspector_name:
+      description: The name of the inspector
+      # one of: ui_name, ui_address, ui_text, ui_date, ui_select, helper_uuid, helper_now_iso, helper_value
+      data_type: ui_text
+      required: true
+    inspector_email:
+      description: The public email addres for the inspector
       # one of: ui_name, ui_address, ui_text, ui_date, ui_select, helper_uuid, helper_now_iso, helper_value
       data_type: ui_text
       required: true

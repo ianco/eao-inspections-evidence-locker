@@ -48,10 +48,6 @@ forms:
       label: updated_date
       type: date
       required: true
-    - name: team_id
-      label: team_id
-      type: text
-      required: true
     - name: project_name
       label: project_name
       type: text
@@ -66,6 +62,14 @@ forms:
       required: true
     - name: hash_value
       label: hash_value
+      type: text
+      required: true
+    - name: inspector_name
+      label: inspector_name
+      type: text
+      required: true
+    - name: inspector_email
+      label: inspector_email
       type: text
       required: true
     mappings:
