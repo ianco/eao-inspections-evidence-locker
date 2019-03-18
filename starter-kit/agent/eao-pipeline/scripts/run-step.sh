@@ -1,3 +1,3 @@
 # PYTHONPATH=../:. python3 "$@"
-cd .. && PYTHONPATH=. python "$@" && cd scripts
+cd .. && PYTHONPATH=. python3 "$@" && cd scripts
 
