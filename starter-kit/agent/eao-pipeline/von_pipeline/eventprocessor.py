@@ -48,7 +48,6 @@ MIN_START_DATE_TZ = timezone.localize(MIN_START_DATE)
 MAX_END_DATE_TZ   = timezone.localize(MAX_END_DATE)
 DATA_CONVERSION_DATE_TZ = timezone.localize(DATA_CONVERSION_DATE)
 
-
 # custom encoder to convert wierd data types to strings
 class CustomJsonEncoder(json.JSONEncoder):
     def default(self, o):
@@ -630,18 +629,20 @@ class EventProcessor:
 
     # organize records in a hierarchy - Site | Inspection | Observation | Media
     # TODO currently we are only loading Inspections ...
-    def organize_unprocessed_objects(self, mongo_rows):
+    def organize_unprocessed_objects(self, mongo_rows):   
+        project_details = pipeline_utils.get_project_details()
         organized_objects = {}
         for row in mongo_rows:
             if 'PROJECT_ID' in row:
+                epic_id = pipeline_utils.get_project_id(project_details, row['PROJECT_NAME'])
                 if row['PROJECT_ID'] in organized_objects:
-                    site_object = organized_objects[row['PROJECT_ID']]
+                    site_object = organized_objects[epic_id]
                 else:
                     site_object = {}
-                    site_object['PROJECT_ID'] = row['PROJECT_ID']
+                    site_object['PROJECT_ID'] = epic_id if epic_id is not None else row['PROJECT_ID']
                     site_object['PROJECT_NAME'] = row['PROJECT_NAME']
                     site_object['inspections'] = {}
-                organized_objects[row['PROJECT_ID']] = site_object
+                organized_objects[epic_id] = site_object
 
                 if row['COLLECTION'] == 'Inspection':
                     inspection_id = row['OBJECT_ID']
@@ -715,6 +716,8 @@ class EventProcessor:
         # organize by project/inspection/observation
         mongo_objects = self.organize_unprocessed_objects(hashed_rows)
         print("Object count = ", len(mongo_objects))
+
+        print(mongo_objects)
 
         # generate and save credentials
         creds = self.generate_all_credentials(mongo_objects, False)

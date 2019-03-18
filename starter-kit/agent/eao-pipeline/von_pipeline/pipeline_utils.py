@@ -1,9 +1,9 @@
 import hashlib
 import json
+import requests
 
 from enum import Enum
 from bson import json_util
-
 
 class COLLECTION_TYPE(Enum):
     INSPECTION = 'Inspection'
@@ -89,7 +89,7 @@ def filter_objects_by_type_and_id(object_type: COLLECTION_TYPE, object_id: str, 
     
     return item_list
 
-'''Filters a list of objects based on the specified colelction type.
+'''Filters a list of objects based on the specified collection type.
 
 Returns:
   list -- The filtered list of objects
@@ -106,3 +106,26 @@ def filter_objects_by_collection(collection_type: COLLECTION_TYPE, objects):
             pass
     
     return filtered_objects
+
+'''Queries the EPIC public API exposing the project details
+
+Returns:
+    dict -- A dict containing the project details
+'''
+def get_project_details():
+    url = 'https://projects.eao.gov.bc.ca/api/projects/published'
+
+    response = requests.get(url)
+
+    return response.json()
+
+def get_project_id(project_details: dict, project_name: str):
+    detail = [x for x in project_details if x['name'] == project_name]
+    result = None
+
+    if len(detail) > 1:
+      raise Exception('More than one project detail was found for ', project_name)
+    elif len(detail) > 0:
+      result = detail[0]['code']
+    
+    return result
