@@ -7,3 +7,4 @@ manage text eol=lf
 *.md text eol=lf
 *.json text eol=lf
 **/s2i/bin/* text eol=lf
+**/von_pipeline/*.py text eol=lf

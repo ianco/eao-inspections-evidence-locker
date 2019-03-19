@@ -11,11 +11,11 @@ from enum import Enum
 
 import pytz
 
-import pipeline_utils
 import psycopg2
 from bson import json_util
 from bson.objectid import ObjectId
 from pymongo import ASCENDING, MongoClient
+from von_pipeline import pipeline_utils
 from von_pipeline.config import config
 
 EAO_SYSTEM_TYPE = 'EAO_EL'
