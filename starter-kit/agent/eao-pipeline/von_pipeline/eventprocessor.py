@@ -22,15 +22,15 @@ EAO_SYSTEM_TYPE = 'EAO_EL'
 
 site_credential = 'SITE'
 site_schema = 'inspection-site.eao-evidence-locker'
-site_version = '1.0.1'
+site_version = '1.0.2'
 
 inspc_credential = 'INSPC'
 inspc_schema = 'safety-inspection.eao-evidence-locker'
-inspc_version = '1.0.1'
+inspc_version = '1.0.2'
 
 obsvn_credential = 'OBSVN'
 obsvn_schema = 'inspection-document.eao-evidence-locker'
-obsvn_version = '1.0.1'
+obsvn_version = '1.0.2'
 
 MDB_COLLECTIONS = ['Inspection','Observation','Audio','Photo','Video']
 MDB_OBJECT_DATE = '_updated_at'
@@ -420,10 +420,12 @@ class EventProcessor:
     def generate_site_credential(self, site, effective_date):
         site_cred = {}
         site_cred['project_id'] = site['PROJECT_ID']
+        site_cred['entity_type'] = site['PROJECT_TYPE']
         site_cred['project_name'] = site['PROJECT_NAME']
         site_cred['location'] = 'Vancouver'
         site_cred['entity_status'] = 'ACT'
         site_cred['effective_date'] = effective_date
+        site_cred['registration_date'] = effective_date
 
         return self.build_credential_dict(site_credential, site_schema, site_version, site_cred['project_id'], site_cred)
 
@@ -508,7 +510,15 @@ class EventProcessor:
             cur = self.conn.cursor()
 
             # process sites:
-            for site in obj_tree:
+            for site in obj_tree:                
+
+                # issue foundational credential / only if we don't have one yet
+                site_cred = self.find_site_credential(EAO_SYSTEM_TYPE, site)
+                if site_cred is None:
+                    site_cred = self.generate_site_credential(site, site['OBJECT_DATE'])
+                    if save_to_db:
+                        self.store_credentials(cur, EAO_SYSTEM_TYPE, site_cred, 'Site', site['PROJECT_ID'], site['PROJECT_ID'], site['PROJECT_NAME'])
+                    creds.append(site_cred)
 
                 # process inspections:
                 for inspection in site['inspections']:
@@ -516,14 +526,6 @@ class EventProcessor:
                     # record the fact that we have processed this Inspection
                     if save_to_db:
                         inspection_rec_id = self.insert_inspection_history(cur, EAO_SYSTEM_TYPE, 'Inspection', inspection['PROJECT_ID'], inspection['PROJECT_NAME'], inspection['OBJECT_ID'], inspection['OBJECT_DATE'], inspection['UPLOAD_DATE'], inspection['UPLOAD_HASH'])
-
-                    # issue foundational credential / only if we don't have one yet
-                    site_cred = self.find_site_credential(EAO_SYSTEM_TYPE, site)
-                    if site_cred is None:
-                        site_cred = self.generate_site_credential(site, inspection['OBJECT_DATE'])
-                        if save_to_db:
-                            self.store_credentials(cur, EAO_SYSTEM_TYPE, site_cred, 'Inspection', inspection_rec_id, inspection['PROJECT_ID'], inspection['PROJECT_NAME'])
-                        creds.append(site_cred)
 
                     # fetch inspection report from mongodb (including observations and media) and issue credential
                     mdb_inspection = self.fetch_mdb_inspection(site, inspection)
@@ -627,10 +629,11 @@ class EventProcessor:
         inspections = pipeline_utils.filter_objects_by_collection(pipeline_utils.COLLECTION_TYPE.INSPECTION, mongo_rows)
         for inspection in inspections:
             epic_id = pipeline_utils.get_project_id(project_details, inspection['PROJECT_NAME'])
+            epic_project_type = pipeline_utils.get_project_type(project_details, inspection['PROJECT_NAME'])
 
             # create site or use existing one, and attach inspection
             if epic_id in organized_objects:
-                site_object = organized_objects[epic_id]
+                site_object = organized_objects.remove(epic_id)
             elif inspection['PROJECT_ID'] in organized_objects:
                 site_object = organized_objects[inspection['PROJECT_ID']]
             else:
@@ -639,8 +642,10 @@ class EventProcessor:
             if site_object is None:
                 site_object = {}
                 site_object['PROJECT_ID'] = epic_id if epic_id is not None else inspection['PROJECT_ID']
+                site_object['PROJECT_TYPE'] = epic_project_type if epic_project_type is not None else 'N.A.'
                 site_object['PROJECT_NAME'] = inspection['PROJECT_NAME']
                 site_object['inspections'] = []
+                site_object['OBJECT_DATE'] = None
             
             inspection_object = inspection
             inspection_object['observations'] = []
@@ -654,6 +659,10 @@ class EventProcessor:
             
             # add inspection to site
             site_object['inspections'].append(inspection_object)
+
+            # update site date
+            if site_object['OBJECT_DATE'] is None or inspection_object['OBJECT_DATE'] < site_object['OBJECT_DATE']:
+                site_object['OBJECT_DATE'] = inspection_object['OBJECT_DATE']
 
             # add site to organized_objects
             organized_objects.append(site_object)

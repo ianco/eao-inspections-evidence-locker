@@ -19,6 +19,24 @@ forms:
       label: location
       type: text
       required: true
+    - name: entity_type
+      label: Project Type
+      type: select
+      options:
+        - Mines
+        - Industrial
+        - Waste Disposal
+        - Energy-Petroleum & Natural Gas
+        - Energy-Electricity
+        - Water Management
+        - Transportation
+        - Tourist Destination resorts
+        - Other
+      required: true
+    - name: registration_date
+      label: registration_date
+      type: date
+      required: true
     mappings:
       attributes: 
         - name: project_id

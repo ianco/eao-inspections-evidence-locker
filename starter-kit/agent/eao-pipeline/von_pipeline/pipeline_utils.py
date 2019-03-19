@@ -129,3 +129,14 @@ def get_project_id(project_details: dict, project_name: str):
       result = detail[0]['code']
     
     return result
+
+def get_project_type(project_details: dict, project_name: str):
+    detail = [x for x in project_details if x['name'] == project_name]
+    result = None
+
+    if len(detail) > 1:
+      raise Exception('More than one project detail was found for ', project_name)
+    elif len(detail) > 0:
+      result = detail[0]['type']
+    
+    return result
