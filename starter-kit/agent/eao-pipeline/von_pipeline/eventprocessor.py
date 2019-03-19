@@ -461,7 +461,7 @@ class EventProcessor:
         inspection_cred['inspection_id'] = mdb_inspection['_id']
         inspection_cred['created_date'] = mdb_inspection['_created_at']
         inspection_cred['updated_date'] = mdb_inspection['_updated_at']
-        inspection_cred['hash_value'] = mdb_inspection['_uploaded_hash'] if '_uploaded_hash' in mdb_inspection else None
+        inspection_cred['hash_value'] = mdb_inspection['upload_hash']
         inspection_cred['effective_date'] = mdb_inspection['_updated_at']
         inspection_cred['inspector_name'] = mdb_inspection['inspector_name']
         inspection_cred['inspector_email'] = mdb_inspection['inspector_email']
@@ -486,6 +486,7 @@ class EventProcessor:
         mdb_inspection['Observation'] = mdb_observations
         mdb_inspection['inspector_name'] = mdb_inspector['firstName'] + ' ' + mdb_inspector['lastName']
         mdb_inspection['inspector_email'] = mdb_inspector['publicEmail']
+        mdb_inspection['upload_hash'] = inspection['UPLOAD_HASH']
 
         return mdb_inspection
 
