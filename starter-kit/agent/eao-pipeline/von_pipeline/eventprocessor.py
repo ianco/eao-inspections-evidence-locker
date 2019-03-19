@@ -1,33 +1,36 @@
 #!/usr/bin/python
  
-import psycopg2
-from pymongo import MongoClient, ASCENDING
-from bson.objectid import ObjectId
 import datetime
-import pytz
+import decimal
+import hashlib
 import json
 import time
-import decimal
-import random
-import hashlib
-import types
 import traceback
-from von_pipeline.config import config
+import types
+from enum import Enum
 
+import pytz
+
+import psycopg2
+from bson import json_util
+from bson.objectid import ObjectId
+from pymongo import ASCENDING, MongoClient
+from von_pipeline import pipeline_utils
+from von_pipeline.config import config
 
 EAO_SYSTEM_TYPE = 'EAO_EL'
 
 site_credential = 'SITE'
 site_schema = 'inspection-site.eao-evidence-locker'
-site_version = '1.0.1'
+site_version = '1.0.2'
 
 inspc_credential = 'INSPC'
 inspc_schema = 'safety-inspection.eao-evidence-locker'
-inspc_version = '1.0.1'
+inspc_version = '1.0.2'
 
 obsvn_credential = 'OBSVN'
 obsvn_schema = 'inspection-document.eao-evidence-locker'
-obsvn_version = '1.0.1'
+obsvn_version = '1.0.2'
 
 MDB_COLLECTIONS = ['Inspection','Observation','Audio','Photo','Video']
 MDB_OBJECT_DATE = '_updated_at'
@@ -44,7 +47,6 @@ timezone = pytz.timezone("America/Los_Angeles")
 MIN_START_DATE_TZ = timezone.localize(MIN_START_DATE)
 MAX_END_DATE_TZ   = timezone.localize(MAX_END_DATE)
 DATA_CONVERSION_DATE_TZ = timezone.localize(DATA_CONVERSION_DATE)
-
 
 # custom encoder to convert wierd data types to strings
 class CustomJsonEncoder(json.JSONEncoder):
@@ -418,10 +420,12 @@ class EventProcessor:
     def generate_site_credential(self, site, effective_date):
         site_cred = {}
         site_cred['project_id'] = site['PROJECT_ID']
+        site_cred['entity_type'] = site['PROJECT_TYPE']
         site_cred['project_name'] = site['PROJECT_NAME']
         site_cred['location'] = 'Vancouver'
         site_cred['entity_status'] = 'ACT'
         site_cred['effective_date'] = effective_date
+        site_cred['registration_date'] = effective_date
 
         return self.build_credential_dict(site_credential, site_schema, site_version, site_cred['project_id'], site_cred)
 
@@ -459,8 +463,10 @@ class EventProcessor:
         inspection_cred['inspection_id'] = mdb_inspection['_id']
         inspection_cred['created_date'] = mdb_inspection['_created_at']
         inspection_cred['updated_date'] = mdb_inspection['_updated_at']
-        inspection_cred['hash_value'] = mdb_inspection['_uploaded_hash'] if '_uploaded_hash' in mdb_inspection else None
+        inspection_cred['hash_value'] = mdb_inspection['upload_hash']
         inspection_cred['effective_date'] = mdb_inspection['_updated_at']
+        inspection_cred['inspector_name'] = mdb_inspection['inspector_name']
+        inspection_cred['inspector_email'] = mdb_inspection['inspector_email']
 
         return self.build_credential_dict(inspc_credential, inspc_schema, inspc_version, 
                                           str(inspection_cred['project_id']) +':' + str(inspection_cred['inspection_id']), 
@@ -470,6 +476,7 @@ class EventProcessor:
     # get all inspection info from mongo db
     def fetch_mdb_inspection(self, site, inspection):
         mdb_inspection = self.mdb_db['Inspection'].find_one( {'_id' : inspection['OBJECT_ID']} )
+        mdb_inspector = self.mdb_db['_User'].find_one( {'_id' : mdb_inspection['userId']} )
         mdb_observations = self.mdb_db['Observation'].find( {'inspectionId' : inspection['OBJECT_ID']} )
         for mdb_observation in mdb_observations:
             mdb_audios = self.mdb_db['Audio'].find_one( {'observationId' : mdb_observation['_id']} )
@@ -479,8 +486,12 @@ class EventProcessor:
             mdb_observation['Photo'] = mdb_photos
             mdb_observation['Video'] = mdb_videos
         mdb_inspection['Observation'] = mdb_observations
+        mdb_inspection['inspector_name'] = mdb_inspector['firstName'] + ' ' + mdb_inspector['lastName']
+        mdb_inspection['inspector_email'] = mdb_inspector['publicEmail']
+        mdb_inspection['upload_hash'] = inspection['UPLOAD_HASH']
 
         return mdb_inspection
+
 
 
     def max_collection_date(self, max_dates, collection, inspection_date):
@@ -498,54 +509,42 @@ class EventProcessor:
             # maintain cursor for storing creds in postgresdb
             cur = self.conn.cursor()
 
-            # hash of sites:
-            for site_id in obj_tree:
-                site = obj_tree[site_id]
+            # process sites:
+            for site in obj_tree:                
 
-                # hash of inspections:
-                for inspection_id in site['inspections']:
-                    inspection = site['inspections'][inspection_id]
-                    i_d = inspection['inspection']
+                # issue foundational credential / only if we don't have one yet
+                site_cred = self.find_site_credential(EAO_SYSTEM_TYPE, site)
+                if site_cred is None:
+                    site_cred = self.generate_site_credential(site, site['OBJECT_DATE'])
+                    if save_to_db:
+                        self.store_credentials(cur, EAO_SYSTEM_TYPE, site_cred, 'Site', site['PROJECT_ID'], site['PROJECT_ID'], site['PROJECT_NAME'])
+                    creds.append(site_cred)
+
+                # process inspections:
+                for inspection in site['inspections']:
 
                     # record the fact that we have processed this Inspection
                     if save_to_db:
-                        inspection_rec_id = self.insert_inspection_history(cur, EAO_SYSTEM_TYPE, 'Inspection', i_d['PROJECT_ID'], i_d['PROJECT_NAME'], i_d['OBJECT_ID'], i_d['OBJECT_DATE'], i_d['UPLOAD_DATE'], i_d['UPLOAD_HASH'])
-
-                    # issue foundational credential / only if we don't have one yet
-                    site_cred = self.find_site_credential(EAO_SYSTEM_TYPE, site)
-                    if site_cred is None:
-                        site_cred = self.generate_site_credential(site, i_d['OBJECT_DATE'])
-                        if save_to_db:
-                            self.store_credentials(cur, EAO_SYSTEM_TYPE, site_cred, 'Inspection', inspection_rec_id, i_d['PROJECT_ID'], i_d['PROJECT_NAME'])
-                        creds.append(site_cred)
+                        inspection_rec_id = self.insert_inspection_history(cur, EAO_SYSTEM_TYPE, 'Inspection', inspection['PROJECT_ID'], inspection['PROJECT_NAME'], inspection['OBJECT_ID'], inspection['OBJECT_DATE'], inspection['UPLOAD_DATE'], inspection['UPLOAD_HASH'])
 
                     # fetch inspection report from mongodb (including observations and media) and issue credential
                     mdb_inspection = self.fetch_mdb_inspection(site, inspection)
                     cred = self.generate_inspection_credential(site, inspection, mdb_inspection)
                     if save_to_db:
-                        self.store_credentials(cur, EAO_SYSTEM_TYPE, cred, 'Inspection', inspection_rec_id, i_d['PROJECT_ID'], i_d['PROJECT_NAME'])
+                        self.store_credentials(cur, EAO_SYSTEM_TYPE, cred, 'Inspection', inspection_rec_id, inspection['PROJECT_ID'], inspection['PROJECT_NAME'])
                     creds.append(cred)
 
                     # save max inspection date
                     max_dates['Inspection'] = self.max_collection_date(max_dates, 'Inspection', mdb_inspection[MDB_OBJECT_DATE])
 
-                    # hash of observations:
-                    for observation_id in inspection['observations']:
-                        observation = inspection['observations'][observation_id]
+                    # process observations:
+                    for observation in inspection['observations']:
 
                         # issue credential for each updated media and observation
                         # TODO just ignore observations for now
 
-                        # audios
-                        for audio in observation['audios']:
-                            pass
-                        
-                        # photos
-                        for photo in observation['photos']:
-                            pass
-                        
-                        # videos
-                        for video in observation['videos']:
+                        # process media:
+                        for media in observation['media']:
                             pass
 
             self.conn.commit()
@@ -577,13 +576,10 @@ class EventProcessor:
 
 
     # find all un-processed objects in mongo db
-    # TODO this currently fetches Inspections only (assumes any updates will include an update to the Inspection)
     def find_unprocessed_objects(self):
         unprocessed_objects = []
 
-        # TODO for now just look at the Investigations collection ...
-        # TODO if necessary fetch other collections as well
-        for collection in [MDB_COLLECTIONS[0],]:
+        for collection in MDB_COLLECTIONS:
             # find last processed date for this collection
             last_event = self.get_last_processed_event(EAO_SYSTEM_TYPE, collection)
 
@@ -603,16 +599,16 @@ class EventProcessor:
                     todo_obj['PROJECT_NAME'] = unprocessed['project']
                 elif collection == 'Observation':
                     todo_obj['observationId'] = unprocessed['_id']
-                else:
-                    todo_obj['observationId'] = unprocessed['observationId'] if 'observationId' in unprocessed else None
-                if collection != 'Inspection':
                     todo_obj['inspectionId'] = unprocessed['inspectionId'] if 'inspectionId' in unprocessed else None
                     todo_obj['_p_inspection'] = unprocessed['_p_inspection'] if '_p_inspection' in unprocessed else None
+                else:
+                    # Photo, Audio, Video
+                    todo_obj['observationId'] = unprocessed['observationId'] if 'observationId' in unprocessed else None
+                    todo_obj['_p_observation'] = unprocessed['_p_observation'] if '_p_observation' in unprocessed else None
                 todo_obj['COLLECTION'] = collection
                 todo_obj['OBJECT_ID'] = unprocessed['_id']
                 todo_obj['OBJECT_DATE'] = unprocessed[MDB_OBJECT_DATE]
-                todo_obj['UPLOAD_DATE'] = unprocessed['_uploaded_at'] if '_uploaded_at' in unprocessed else None
-                todo_obj['UPLOAD_HASH'] = unprocessed['_uploaded_hash'] if '_uploaded_hash' in unprocessed else None
+                todo_obj['UPLOAD_DATE'] = unprocessed[MDB_OBJECT_DATE]
                 unprocessed_objects.append(todo_obj)
 
         # fill in project info for all items
@@ -626,67 +622,50 @@ class EventProcessor:
         return unprocessed_objects
 
     # organize records in a hierarchy - Site | Inspection | Observation | Media
-    # TODO currently we are only loading Inspections ...
-    def organize_unprocessed_objects(self, mongo_rows):
-        organized_objects = {}
-        for row in mongo_rows:
-            if 'PROJECT_ID' in row:
-                if row['PROJECT_ID'] in organized_objects:
-                    site_object = organized_objects[row['PROJECT_ID']]
-                else:
-                    site_object = {}
-                    site_object['PROJECT_ID'] = row['PROJECT_ID']
-                    site_object['PROJECT_NAME'] = row['PROJECT_NAME']
-                    site_object['inspections'] = {}
-                organized_objects[row['PROJECT_ID']] = site_object
+    def organize_unprocessed_objects(self, mongo_rows):   
+        project_details = pipeline_utils.get_project_details()
+        organized_objects = []
 
-                if row['COLLECTION'] == 'Inspection':
-                    inspection_id = row['OBJECT_ID']
-                elif '_p_inspection' in row:
-                    inspection_id = row['_p_inspection']
-                elif 'inspectionId' in row:
-                    inspection_id = row['inspectionId']
-                else:
-                    inspection_id = None
+        inspections = pipeline_utils.filter_objects_by_collection(pipeline_utils.COLLECTION_TYPE.INSPECTION, mongo_rows)
+        for inspection in inspections:
+            epic_id = pipeline_utils.get_project_id(project_details, inspection['PROJECT_NAME'])
+            epic_project_type = pipeline_utils.get_project_type(project_details, inspection['PROJECT_NAME'])
 
-                if inspection_id is not None:
-                    if inspection_id in site_object['inspections']:
-                        inspct_object = site_object['inspections'][inspection_id]
-                    else:
-                        inspct_object = {}
-                        inspct_object['OBJECT_ID'] = inspection_id
-                        inspct_object['observations'] = {}
-                    if row['COLLECTION'] == 'Inspection':
-                        inspct_object['inspection'] = row
-                    site_object['inspections'][inspection_id] = inspct_object
+            # create site or use existing one, and attach inspection
+            if epic_id in organized_objects:
+                site_object = organized_objects.remove(epic_id)
+            elif inspection['PROJECT_ID'] in organized_objects:
+                site_object = organized_objects[inspection['PROJECT_ID']]
+            else:
+                site_object = None
+            
+            if site_object is None:
+                site_object = {}
+                site_object['PROJECT_ID'] = epic_id if epic_id is not None else inspection['PROJECT_ID']
+                site_object['PROJECT_TYPE'] = epic_project_type if epic_project_type is not None else 'N.A.'
+                site_object['PROJECT_NAME'] = inspection['PROJECT_NAME']
+                site_object['inspections'] = []
+                site_object['OBJECT_DATE'] = None
+            
+            inspection_object = inspection
+            inspection_object['observations'] = []
 
-                    if row['COLLECTION'] != 'Inspection':
-                        if row['COLLECTION'] == 'Observation':
-                            observation_id = row['OBJECT_ID']
-                        else:
-                            observation_id = row['observationId']
+            # process observations for each inspection
+            observations = pipeline_utils.filter_objects_by_type_and_id(pipeline_utils.COLLECTION_TYPE.OBSERVATION, inspection['OBJECT_ID'], mongo_rows)
+            for observation in observations:
+                observation_object = observation
+                observation_object['media'] = pipeline_utils.filter_objects_by_type_and_id(pipeline_utils.COLLECTION_TYPE.MEDIA, observation['OBJECT_ID'], mongo_rows)
+                inspection_object['observations'].append(observation_object)
+            
+            # add inspection to site
+            site_object['inspections'].append(inspection_object)
 
-                        if observation_id in inspct_object['observations']:
-                            obsrv_object = inspct_object['observations'][observation_id]
-                        else:
-                            obsrv_object = {}
-                            obsrv_object['OBJECT_ID'] = observation_id
-                            obsrv_object['audios'] = {}
-                            obsrv_object['photos'] = {}
-                            obsrv_object['videos'] = {}
-                        if row['COLLECTION'] == 'Observation':
-                            obsrv_object['observation'] = row
-                        inspct_object['observations'][observation_id] = obsrv_object
+            # update site date
+            if site_object['OBJECT_DATE'] is None or inspection_object['OBJECT_DATE'] < site_object['OBJECT_DATE']:
+                site_object['OBJECT_DATE'] = inspection_object['OBJECT_DATE']
 
-                        if row['COLLECTION'] != 'Observation':
-                            if row['OBJECT_ID'] in obsrv_object[row['COLLECTION']]:
-                                media_object = obsrv_object[row['COLLECTION']][row['OBJECT_ID']]
-                            else:
-                                media_object = {}
-                                media_object['OBJECT_ID'] = row['OBJECT_ID']
-                                media_object['media_type'] = row['COLLECTION']
-                            media_object['media'] = row
-                            obsrv_object[row['COLLECTION']][row['OBJECT_ID']] = media_object
+            # add site to organized_objects
+            organized_objects.append(site_object)
 
         return organized_objects
 
@@ -706,13 +685,20 @@ class EventProcessor:
         mongo_rows = self.find_unprocessed_objects()
         print("Row count = ", len(mongo_rows))
 
+        # add hashes to inspections, observations, media
+        hashed_rows = pipeline_utils.add_record_hashes(mongo_rows)
+
         # organize by project/inspection/observation
-        mongo_objects = self.organize_unprocessed_objects(mongo_rows)
+        mongo_objects = self.organize_unprocessed_objects(hashed_rows)
         print("Object count = ", len(mongo_objects))
 
         # generate and save credentials
         creds = self.generate_all_credentials(mongo_objects)
         print("Generated cred count = ", len(creds))
+
+
+        
+
 
 
     # main entry point for processing status job
@@ -795,5 +781,3 @@ class EventProcessor:
             if cursor is not None:
                 cursor.close()
             cursor = None
-
-

@@ -73,6 +73,25 @@ issuers:
           value:
             input: entity_status
             from: claim
+      - model: attribute
+        fields:
+          type:
+            input: entity_type
+            from: value
+          value:
+            input: entity_type
+            from: claim
+      - model: attribute
+        fields:
+          type:
+            input: registration_date
+            from: value
+          format:
+            input: datetime
+            from: value
+          value:
+            input: registration_date
+            from: claim
 
     - description: The safety-inspection credential issued by EAO Evidence Locker
       schema: safety-inspection.eao-evidence-locker
@@ -108,10 +127,18 @@ issuers:
       - model: attribute
         fields:
           type:
-            input: team_id
+            input: inspector_name
             from: value
           value:
-            input: team_id
+            input: inspector_name
+            from: claim
+      - model: attribute
+        fields:
+          type:
+            input: inspector_email
+            from: value
+          value:
+            input: inspector_email
             from: claim
       - model: attribute
         fields:
@@ -245,22 +272,22 @@ verifiers:
 
 proof_requests:
   registration:
-    version: '1.0.1'
+    version: '1.0.2'
     schemas:
       - key:
           did: Mrho166NhN7ArUqRL8t1sR
           name: inspection-site.eao-evidence-locker
-          version: '1.0.1'
+          version: '1.0.2'
         attributes:
           - project_id
 
   inspection:
-    version: '1.0.1'
+    version: '1.0.2'
     schemas:
       - key:
           did: Mrho166NhN7ArUqRL8t1sR
           name: safety-inspection.eao-evidence-locker
-          version: '1.0.1'
+          version: '1.0.2'
         attributes:
           - project_id
           - inspection_id
