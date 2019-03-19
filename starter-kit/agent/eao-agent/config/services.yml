@@ -38,9 +38,6 @@ issuers:
         effective_date:
           input: effective_date
           from: claim
-        registration_date:
-          input: registration_date
-          from: claim
       topic:
         source_id:
           input: project_id
@@ -83,6 +80,17 @@ issuers:
             from: value
           value:
             input: entity_type
+            from: claim
+      - model: attribute
+        fields:
+          type:
+            input: registration_date
+            from: value
+          format:
+            input: datetime
+            from: value
+          value:
+            input: registration_date
             from: claim
 
     - description: The safety-inspection credential issued by EAO Evidence Locker
