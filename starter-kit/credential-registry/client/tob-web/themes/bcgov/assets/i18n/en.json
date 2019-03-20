@@ -33,7 +33,17 @@
     "relationship": "Relationship",
     "relationship_description": "Description",
     "relationship_status": "Status",
-    "relationship_status_effective": "Status Effective"
+    "relationship_status_effective": "Status Effective",
+    "created_date" : "Inspection Date",
+    "hash_value" : "Hash",
+    "inspection_id" : "Inspection ID",
+    "inspector_email" : "Inspector E-mail",
+    "inspector_name" : "Inspector Name",
+    "project_id" : "Project ID",
+    "updated_date" : "Updated Date",
+    "document_id" : "Observation ID",
+    "has_media" : "Number of Attached Media",
+    "requirement" : "Requirement"
   },
   "category": {
     "address_type": {
@@ -76,7 +86,8 @@
   },
   "topic": {
     "breadcrumb": "EAO Project",
-    "return-link": "Back to EAO Project"
+    "return-link": "Back to EAO Project",    
+    "source-id": "Project ID"
   },
   "jurisdiction": {
     "general": {

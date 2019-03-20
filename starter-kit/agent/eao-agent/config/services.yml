@@ -239,10 +239,26 @@ issuers:
       - model: attribute
         fields:
           type:
-            input: document_type
+            input: requirement
             from: value
           value:
-            input: document_type
+            input: requirement
+            from: claim
+      - model: attribute
+        fields:
+          type:
+            input: has_media
+            from: value
+          value:
+            input: has_media
+            from: claim
+      - model: attribute
+        fields:
+          type:
+            input: coordinates
+            from: value
+          value:
+            input: coordinates
             from: claim
       - model: attribute
         fields:
