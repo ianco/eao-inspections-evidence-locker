@@ -288,22 +288,22 @@ verifiers:
 
 proof_requests:
   registration:
-    version: '1.0.3'
+    version: '0.0.1'
     schemas:
       - key:
           did: Mrho166NhN7ArUqRL8t1sR
           name: inspection-site.eao-evidence-locker
-          version: '1.0.3'
+          version: '0.0.1'
         attributes:
           - project_id
 
   inspection:
-    version: '1.0.3'
+    version: '0.0.1'
     schemas:
       - key:
           did: Mrho166NhN7ArUqRL8t1sR
           name: safety-inspection.eao-evidence-locker
-          version: '1.0.3'
+          version: '0.0.1'
         attributes:
           - project_id
           - inspection_id
