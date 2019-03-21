@@ -17,46 +17,26 @@
   "attribute": {
     "effective_dates": "Effective Dates",
     "effective_date-short": "Inspection",
-    "entity_name_assumed_effective": "Assumed Name Effective Date",
-    "entity_name_effective": "Name Effective Date",
-    "entity_name_effective-short": "Name Effective",
     "entity_status": "Project Status",
-    "entity_status_effective": "Status Effective Date",
-    "entity_status_effective-short": "Status Effective",
     "entity_type": "Project Category",
-    "home_jurisdiction": "Home Jurisdiction",
     "name_short": "Name",
-    "registered_jurisdiction": "Registered Jurisdiction",
     "registration_date": "Project Start Date",
     "reason_description": "Inspection Issue Reason",
     "status_short": "Status",
-    "relationship": "Relationship",
-    "relationship_description": "Description",
-    "relationship_status": "Status",
-    "relationship_status_effective": "Status Effective"
+    "created_date" : "Inspection Date",
+    "hash_value" : "Hash",
+    "inspection_id" : "Inspection ID",
+    "inspector_email" : "Inspector E-mail",
+    "inspector_name" : "Inspector Name",
+    "project_id" : "Project ID",
+    "updated_date" : "Updated Date",
+    "document_id" : "Observation ID",
+    "has_media" : "Number of Attached Media",
+    "requirement" : "Requirement"
   },
   "category": {
-    "address_type": {
-      "HD": "Head Office",
-      "RC": "Records Office",
-      "RG": "Registered Office",
-      "LQ": "Location of Liquidation Records Office",
-      "DS": "Dissolved Company's Records Office",
-      "SH": "Saskatchewan Head Office",
-      "TH": "TILMA Head Office",
-      "FO": "Firm Office",
-      "HO": "Head Office outside BC"
-    },
     "entity_status": {
-      "ACT": "Active",
-      "HIS": "Historical"
-    },
-    "relationship": {
-      "Owns": "Owns"
-    },
-    "relationship_status": {
-      "ACT": "Active",
-      "HIS": "Historical"
+      "ACT": "Active"
     }
   },
   "general": {
@@ -66,9 +46,9 @@
     "about-title": "About Evidence Locker",
     "breadcrumb": "Home",
     "title": "Welcome to EAO's Evidence Locker",
-    "title-certs": "Inspections recorded",
+    "title-certs": "Inspection items stored",
     "title-orgs": "Active EAO Projects",
-    "title-this-week": "Inspections added this week"
+    "title-this-week": "Inspection items added this week"
   },
   "search": {
     "input-label": "EAO Project Name or Project ID",
@@ -76,7 +56,8 @@
   },
   "topic": {
     "breadcrumb": "EAO Project",
-    "return-link": "Back to EAO Project"
+    "return-link": "Back to EAO Project",    
+    "source-id": "Project ID"
   },
   "jurisdiction": {
     "general": {

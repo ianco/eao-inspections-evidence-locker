@@ -22,15 +22,15 @@ EAO_SYSTEM_TYPE = 'EAO_EL'
 
 site_credential = 'SITE'
 site_schema = 'inspection-site.eao-evidence-locker'
-site_version = '1.0.2'
+site_version = '0.0.1'
 
 inspc_credential = 'INSPC'
 inspc_schema = 'safety-inspection.eao-evidence-locker'
-inspc_version = '1.0.2'
+inspc_version = '0.0.1'
 
 obsvn_credential = 'OBSVN'
 obsvn_schema = 'inspection-document.eao-evidence-locker'
-obsvn_version = '1.0.2'
+obsvn_version = '0.0.1'
 
 MDB_COLLECTIONS = ['Inspection','Observation','Audio','Photo','Video']
 MDB_OBJECT_DATE = '_updated_at'
@@ -339,7 +339,7 @@ class EventProcessor:
                 cur.close()
 
     # insert data for one corp into the history table
-    def insert_inspection_history(self, cur, system_type, collection, project_id, project_name, object_id, object_date, upload_date, upload_hash, process_date=None, process_success=None, process_msg=None):
+    def insert_event_history_log(self, cur, system_type, collection, project_id, project_name, object_id, object_date, upload_date, upload_hash, process_date=None, process_success=None, process_msg=None):
         """ insert a new corps into the corps table """
         sql = """INSERT INTO EVENT_HISTORY_LOG 
                  (SYSTEM_TYPE_CD, COLLECTION, PROJECT_ID, PROJECT_NAME, OBJECT_ID, OBJECT_DATE, UPLOAD_DATE, UPLOAD_HASH, ENTRY_DATE,
@@ -457,40 +457,47 @@ class EventProcessor:
 
 
     # generate a site inspection credential
-    def generate_inspection_credential(self, site, inspection, mdb_inspection):
+    def generate_inspection_credential(self, site, inspection):
         inspection_cred = {}
         inspection_cred['project_id'] = site['PROJECT_ID']
-        inspection_cred['inspection_id'] = mdb_inspection['_id']
-        inspection_cred['created_date'] = mdb_inspection['_created_at']
-        inspection_cred['updated_date'] = mdb_inspection['_updated_at']
-        inspection_cred['hash_value'] = mdb_inspection['upload_hash']
-        inspection_cred['effective_date'] = mdb_inspection['_updated_at']
-        inspection_cred['inspector_name'] = mdb_inspection['inspector_name']
-        inspection_cred['inspector_email'] = mdb_inspection['inspector_email']
+        inspection_cred['inspection_id'] = inspection['OBJECT_ID']
+        inspection_cred['created_date'] = inspection['OBJECT_DATE']
+        inspection_cred['updated_date'] = inspection['OBJECT_DATE']
+        inspection_cred['hash_value'] = inspection['UPLOAD_HASH']
+        inspection_cred['effective_date'] = inspection['OBJECT_DATE']
+        inspection_cred['inspector_name'] = inspection['inspector_name']
+        inspection_cred['inspector_email'] = inspection['inspector_email']
 
         return self.build_credential_dict(inspc_credential, inspc_schema, inspc_version, 
-                                          str(inspection_cred['project_id']) +':' + str(inspection_cred['inspection_id']), 
+                                          str(inspection_cred['project_id']) + ':' + str(inspection_cred['inspection_id']), 
                                           inspection_cred)
+                                          
+    # generate a site inspection credential
+    def generate_observation_credential(self, project_id, inspection_id, observation):
+        observation_cred = {}
+        observation_cred['project_id'] = project_id
+        observation_cred['inspection_id'] = inspection_id
+        observation_cred['document_id'] = observation['OBJECT_ID']
+        observation_cred['created_date'] = observation['OBJECT_DATE']
+        observation_cred['updated_date'] = observation['OBJECT_DATE']
+        observation_cred['hash_value'] = observation['UPLOAD_HASH']
+        observation_cred['effective_date'] = observation['OBJECT_DATE']
+        observation_cred['requirement'] = observation['requirement']
+        observation_cred['has_media'] = len(observation['media'])
+        observation_cred['coordinates'] = observation['coordinates'] if 'coordinates' in observation else None
+
+        return self.build_credential_dict(obsvn_credential, obsvn_schema, obsvn_version,
+                                          str(observation_cred['project_id']) + ':' + str(observation_cred['inspection_id'] + ':' + str(observation_cred['document_id'])),
+                                          observation_cred)
 
 
     # get all inspection info from mongo db
-    def fetch_mdb_inspection(self, site, inspection):
-        mdb_inspection = self.mdb_db['Inspection'].find_one( {'_id' : inspection['OBJECT_ID']} )
-        mdb_inspector = self.mdb_db['_User'].find_one( {'_id' : mdb_inspection['userId']} )
-        mdb_observations = self.mdb_db['Observation'].find( {'inspectionId' : inspection['OBJECT_ID']} )
-        for mdb_observation in mdb_observations:
-            mdb_audios = self.mdb_db['Audio'].find_one( {'observationId' : mdb_observation['_id']} )
-            mdb_photos = self.mdb_db['Photo'].find_one( {'observationId' : mdb_observation['_id']} )
-            mdb_videos = self.mdb_db['Video'].find_one( {'observationId' : mdb_observation['_id']} )
-            mdb_observation['Audio'] = mdb_audios
-            mdb_observation['Photo'] = mdb_photos
-            mdb_observation['Video'] = mdb_videos
-        mdb_inspection['Observation'] = mdb_observations
-        mdb_inspection['inspector_name'] = mdb_inspector['firstName'] + ' ' + mdb_inspector['lastName']
-        mdb_inspection['inspector_email'] = mdb_inspector['publicEmail']
-        mdb_inspection['upload_hash'] = inspection['UPLOAD_HASH']
+    def add_inspector_details(self, inspection):
+        mdb_inspector = self.mdb_db['_User'].find_one( {'_id' : inspection['userId']} )
+        inspection['inspector_name'] = mdb_inspector['firstName'] + ' ' + mdb_inspector['lastName']
+        inspection['inspector_email'] = mdb_inspector['publicEmail']
 
-        return mdb_inspection
+        return inspection
 
 
 
@@ -523,29 +530,33 @@ class EventProcessor:
                 # process inspections:
                 for inspection in site['inspections']:
 
-                    # record the fact that we have processed this Inspection
-                    if save_to_db:
-                        inspection_rec_id = self.insert_inspection_history(cur, EAO_SYSTEM_TYPE, 'Inspection', inspection['PROJECT_ID'], inspection['PROJECT_NAME'], inspection['OBJECT_ID'], inspection['OBJECT_DATE'], inspection['UPLOAD_DATE'], inspection['UPLOAD_HASH'])
+                    # fetch inspector data from mongodb and generate credential
+                    inspection = self.add_inspector_details(inspection)
+                    cred = self.generate_inspection_credential(site, inspection)
 
-                    # fetch inspection report from mongodb (including observations and media) and issue credential
-                    mdb_inspection = self.fetch_mdb_inspection(site, inspection)
-                    cred = self.generate_inspection_credential(site, inspection, mdb_inspection)
+                    # record the fact that we have processed this Inspection, and issue credential
                     if save_to_db:
-                        self.store_credentials(cur, EAO_SYSTEM_TYPE, cred, 'Inspection', inspection_rec_id, inspection['PROJECT_ID'], inspection['PROJECT_NAME'])
+                        inspection_rec_id = self.insert_event_history_log(cur, EAO_SYSTEM_TYPE, 'Inspection', site['PROJECT_ID'], site['PROJECT_NAME'], inspection['OBJECT_ID'], inspection['OBJECT_DATE'], inspection['UPLOAD_DATE'], inspection['UPLOAD_HASH'])
+                        self.store_credentials(cur, EAO_SYSTEM_TYPE, cred, 'Inspection', inspection_rec_id, site['PROJECT_ID'], site['PROJECT_NAME'])
+
                     creds.append(cred)
 
                     # save max inspection date
-                    max_dates['Inspection'] = self.max_collection_date(max_dates, 'Inspection', mdb_inspection[MDB_OBJECT_DATE])
+                    max_dates['Inspection'] = self.max_collection_date(max_dates, 'Inspection', inspection['OBJECT_DATE'])
 
                     # process observations:
                     for observation in inspection['observations']:
 
-                        # issue credential for each updated media and observation
-                        # TODO just ignore observations for now
+                        # generate credential
+                        cred = self.generate_observation_credential(site['PROJECT_ID'], inspection['OBJECT_ID'], observation)
 
-                        # process media:
-                        for media in observation['media']:
-                            pass
+                        # record the fact that we have processed this Observation, and issue credential
+                        if save_to_db:
+                            observation_rec_id = self.insert_event_history_log(cur, EAO_SYSTEM_TYPE, 'Observation', site['PROJECT_ID'], site['PROJECT_NAME'], observation['OBJECT_ID'], observation['OBJECT_DATE'], observation['UPLOAD_DATE'], observation['UPLOAD_HASH'])
+                            self.store_credentials(cur, EAO_SYSTEM_TYPE, cred, 'Observation', observation_rec_id, site['PROJECT_ID'], site['PROJECT_NAME'])
+
+                        creds.append(cred)
+
 
             self.conn.commit()
             cur.close()
@@ -597,14 +608,19 @@ class EventProcessor:
                 if collection == 'Inspection':
                     todo_obj['PROJECT_ID'] = self.project_name_to_id(unprocessed['project'])
                     todo_obj['PROJECT_NAME'] = unprocessed['project']
+                    todo_obj['userId'] = unprocessed['userId']
                 elif collection == 'Observation':
                     todo_obj['observationId'] = unprocessed['_id']
                     todo_obj['inspectionId'] = unprocessed['inspectionId'] if 'inspectionId' in unprocessed else None
                     todo_obj['_p_inspection'] = unprocessed['_p_inspection'] if '_p_inspection' in unprocessed else None
+                    todo_obj['title'] = unprocessed['title'] if 'title' in unprocessed else None
+                    todo_obj['requirement'] = unprocessed['requirement'] if 'requirement' in unprocessed else None
+                    todo_obj['coordinate'] = unprocessed['coordinate'] if 'coordinate' in unprocessed else None
                 else:
                     # Photo, Audio, Video
                     todo_obj['observationId'] = unprocessed['observationId'] if 'observationId' in unprocessed else None
                     todo_obj['_p_observation'] = unprocessed['_p_observation'] if '_p_observation' in unprocessed else None
+                
                 todo_obj['COLLECTION'] = collection
                 todo_obj['OBJECT_ID'] = unprocessed['_id']
                 todo_obj['OBJECT_DATE'] = unprocessed[MDB_OBJECT_DATE]
@@ -649,6 +665,10 @@ class EventProcessor:
             
             inspection_object = inspection
             inspection_object['observations'] = []
+
+            # delete redundant information
+            del inspection_object['PROJECT_ID']
+            del inspection_object['PROJECT_NAME']            
 
             # process observations for each inspection
             observations = pipeline_utils.filter_objects_by_type_and_id(pipeline_utils.COLLECTION_TYPE.OBSERVATION, inspection['OBJECT_ID'], mongo_rows)

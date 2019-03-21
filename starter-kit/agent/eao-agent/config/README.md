@@ -31,7 +31,7 @@ The following is a simple `schemas.yml` file with a single credential having a s
 
 ``` YAML
 - name: my-permit.my-organization.ca
-  version: '1.0.2'
+  version: '1.0.0'
   attributes:
     - corp_num
     - legal_name
@@ -152,7 +152,7 @@ As the web form loads, any `proof_request` entries referenced in this file (`rou
 - `date` is a date field, with calendar support
 - `select` is a dropdown list of enumerated values driven by the `options` list
 - `address` is a special, multi-field widget for entering a Canadian address that includes auto-complete (using the Canada Post auto-complete API)
-  - **NOTE**: An example of the use of the `address` field type can be seen [here in dFlow](https://dflow.orgbook.gov.bc.ca/bcreg/incorporation?credential_ids=&schema_name=registration.dflow&schema_version=1.0.2&issuer_did=6qnvgJtqwK44D8LFYnV5Yf), the fields from the "Mailing Address" label down to "Postal Code" and "Country" fields.
+  - **NOTE**: An example of the use of the `address` field type can be seen [here in dFlow](https://dflow.orgbook.gov.bc.ca/bcreg/incorporation?credential_ids=&schema_name=registration.dflow&schema_version=1.0.0&issuer_did=6qnvgJtqwK44D8LFYnV5Yf), the fields from the "Mailing Address" label down to "Postal Code" and "Country" fields.
 
 `mappings` is a list of attributes that are auto-populated by one of a number of helpers. The current set of helper functions can be found by looking at [this code from the VON-X repo (master branch)](https://github.com/PSPC-SPAC-buyandsell/von-x/blob/master/vonx/web/helpers.py).
 
@@ -316,12 +316,12 @@ proof_requests:
   # This Agent's DID - for proof requests based on this Issuer's Credentials
   #      X3tCbZSE9uUb223KYDWd6o
   dflow_registration:
-    version: '1.0.2'
+    version: '1.0.0'
     schemas:
       - key:
           did: 6qnvgJtqwK44D8LFYnV5Yf
           name: registration.dflow
-          version: '1.0.2'
+          version: '1.0.0'
         attributes:
           - corp_num
           - legal_name

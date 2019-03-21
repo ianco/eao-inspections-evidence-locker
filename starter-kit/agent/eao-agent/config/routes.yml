@@ -114,8 +114,8 @@ forms:
       label: updated_date
       type: date
       required: true
-    - name: project_name
-      label: project_name
+    - name: project_id
+      label: project_id
       type: text
       required: true
     - name: inspection_id
@@ -126,14 +126,18 @@ forms:
       label: created_date
       type: date
       required: true
-    - name: document_type
-      label: document_type
-      type: select
-      options:
-      - todo-1
-      - todo-2
-      - todo-3
+    - name: requirement
+      label: requirement
+      type: text
       required: true
+    - name: has_media
+      label: has_media
+      type: text
+      required: true
+    - name: coordinates
+      label: coordinates
+      type: text
+      required: false
     - name: hash_value
       label: hash_value
       type: text

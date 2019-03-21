@@ -1,7 +1,7 @@
 # Documentation: https://github.com/bcgov/von-agent-template/tree/master/von-x-agent/config
 
 - name: inspection-site.eao-evidence-locker
-  version: '1.0.2'
+  version: '0.0.1'
   description: The core site credential issued by EAO Evidence Locker
   endpoint: $ENDPOINT_URL
   path: /eao-evidence-locker/inspection-site
@@ -43,7 +43,7 @@
       required: true
 
 - name: safety-inspection.eao-evidence-locker
-  version: '1.0.2'
+  version: '0.0.1'
   description: The safety-inspection credential issued by EAO Evidence Locker
   endpoint: $ENDPOINT_URL
   path: /eao-evidence-locker/safety-inspection
@@ -95,7 +95,7 @@
       required: true
 
 - name: inspection-document.eao-evidence-locker
-  version: '1.0.2'
+  version: '0.0.1'
   description: A document credential attached to an inspection issued by EAO Evidence Locker
   endpoint: $ENDPOINT_URL
   path: /eao-evidence-locker/inspection-document
@@ -115,20 +115,30 @@
       data_type: ui_text
       required: true
     inspection_id:
-      description: ID issued by the registering organization
+      description: Inspection ID issued by the registering organization
       # one of: ui_name, ui_address, ui_text, ui_date, ui_select, helper_uuid, helper_now_iso, helper_value
       data_type: ui_text
       required: true
     document_id:
-      description: Document ID issued by the registering organization
+      description: Observation ID issued by the registering organization
       # one of: ui_name, ui_address, ui_text, ui_date, ui_select, helper_uuid, helper_now_iso, helper_value
       data_type: ui_text
       required: true
-    document_type:
-      description: Document Type issued by the registering organization
+    requirement:
+      description: The requirement to satisfy the observation and return to compliance
       # one of: ui_name, ui_address, ui_text, ui_date, ui_select, helper_uuid, helper_now_iso, helper_value
-      data_type: ui_select
+      data_type: ui_text
       required: true
+    has_media:
+      description: The number of media (Audio, Photo, Video) attached to the observation
+      # one of: ui_name, ui_address, ui_text, ui_date, ui_select, helper_uuid, helper_now_iso, helper_value
+      data_type: ui_text
+      required: true
+    coordinates:
+      description: The geographic coordinates (latitude, longitude) at which the observation was made
+      # one of: ui_name, ui_address, ui_text, ui_date, ui_select, helper_uuid, helper_now_iso, helper_value
+      data_type: ui_text
+      required: false
     created_date:
       description: Date document was created
       # one of: ui_name, ui_address, ui_text, ui_date, ui_select, helper_uuid, helper_now_iso, helper_value
