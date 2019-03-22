@@ -1,9 +1,11 @@
 import hashlib
 import json
+from enum import Enum
+
 import requests
 
-from enum import Enum
 from bson import json_util
+
 
 class COLLECTION_TYPE(Enum):
     INSPECTION = 'Inspection'
@@ -113,11 +115,14 @@ Returns:
     dict -- A dict containing the project details
 '''
 def get_project_details():
-    url = 'https://projects.eao.gov.bc.ca/api/projects/published'
+    # url = 'https://projects.eao.gov.bc.ca/api/projects/published'
 
-    response = requests.get(url)
+    # response = requests.get(url)
 
-    return response.json()
+    # return response.json()
+
+    with open('von_pipeline/epic-projects.json', 'r') as f:
+        return json.load(f)
 
 def get_project_id(project_details: dict, project_name: str):
     detail = [x for x in project_details if x['name'] == project_name]
