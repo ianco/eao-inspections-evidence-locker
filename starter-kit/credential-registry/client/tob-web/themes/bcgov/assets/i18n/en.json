@@ -12,17 +12,18 @@
     }
   },
   "name": {
-    "registration": "Project Site"
+    "registration": "Project"
   },
   "attribute": {
-    "effective_dates": "Effective Dates",
-    "effective_date-short": "Inspection",
-    "entity_status": "Project Status",
-    "entity_type": "Project Category",
-    "name_short": "Name",
-    "registration_date": "Project Start Date",
-    "reason_description": "Inspection Issue Reason",
-    "status_short": "Status",
+    "location" : "Project Location",
+    "effective_dates" : "Effective Dates",
+    "effective_date-short" : "Inspection",
+    "entity_status" : "Project Status",
+    "entity_type" : "Project Category",
+    "name_short" : "Name",
+    "registration_date" : "Project Start Date",
+    "reason_description" : "Inspection Issue Reason",
+    "status_short" : "Status",
     "created_date" : "Inspection Date",
     "hash_value" : "Hash",
     "inspection_id" : "Inspection ID",
