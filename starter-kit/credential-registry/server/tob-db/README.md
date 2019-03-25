@@ -16,10 +16,6 @@ To deploy TheOrgBook on an instance of OpenShift, see [the instructions](../Runn
 
 Refer to [Accessing a PostgreSQL Database Hosted in OpenShift](./PortForwardingaDatabase.md) for details on how to connect to an instance of a database hosted in OpenShift using port forwarding.
 
-## BC Registries Database Agent
-
-The BC Registries database components have been migrated into their own repository/project.  Please refer to [von-bc-registries-agent](https://github.com/bcgov/von-bc-registries-agent) for details.
-
 # Database Schema Documentation
 
 Databases are documented using [SchemaSpy](https://github.com/bcgov/SchemaSpy).
