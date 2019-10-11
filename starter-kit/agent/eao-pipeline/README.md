@@ -1,12 +1,12 @@
-# BC Registries Event Processor
+# EAO Event Processor
 
-This project contains a data pipeline for pulling data related to BC Registries events (Registries updates to the records of incorporated entities), using that data to generated Verifiable Credentials, and then delivering those Credentials to [TheOrgBook]((https://github.com/bcgov/TheOrgBook)). The project uses [VON-X](https://github.com/PSPC-SPAC-buyandsell/von-x) as it's Agent to communicate with a [Hyperledger Indy network](https://github.com/hyperledger/indy-node) (eventually [Sovrin](sovrin.org)) and TheOrgBook.
+This project contains a data pipeline for pulling data related to inspections performed on projects which are overseen by the Environmental Assessment office, using that data to generated Verifiable Credentials, and then delivering those Credentials to [TheOrgBook]((https://github.com/bcgov/TheOrgBook)). The project uses [VON-X](https://github.com/PSPC-SPAC-buyandsell/von-x) as it's Agent to communicate with a [Hyperledger Indy network](https://github.com/hyperledger/indy-node) (eventually [Sovrin](sovrin.org)) and TheOrgBook.
 
 The data pipeline is implemented using the [mara-app](https://github.com/mara/mara-app) framework.
 
 ## Mara Example Data Warehouse Project
 
-This project is based on a data warehouse example using the mara framework (https://github.com/mara/mara-example-project).
+This project is based on a data warehouse example using the mara framework (https://github.com/mara/eao-pipeline).
 
 > A runnable app that demonstrates how to build a data warehouse with mara. Combines the [data-integration](https://github.com/mara/data-integration) and [bigquery-downloader](https://github.com/mara/bigquery-downloader) libraries with the [mara-app](https://github.com/mara/mara-app) framework into a project.
 
@@ -36,17 +36,14 @@ Pipeline processes are available through the Mara console, and via bash scripts 
 
 ![Event Processor Dashboard](https://raw.githubusercontent.com/bcgov/von-bc-registries-agent/master/data-pipeline/docs/bc_registries_dashboard.png "Event Processor Dashboard")
 
-The "bc reg event processor" pipeline monitors the BC Registry event queue, loads corporation data, creates and posts credentials.  This job should be run on a schedule (and corresponds to the "bcreg/bc_reg_pipeline.py" script) to continually monitor the BC Registries database for updates.
+The "von data event processor" pipeline monitors the EAO Evidence Locker event queue, loads inspection data from MongoDB, creates and posts credentials.  This job should be run on a schedule (and corresponds to the "von_pipeline/von_data_pipeline.py" script) to continually monitor the EAO Upload Center MongoDB for updates.
 
-The "bc reg pipeline status" pipeline lists the number of processed/outstanding records in each stage of the pipeline.  This can be run from the console, or via a script ("bcreg/display_pipeline_status.py").
+The "von data pipeline status" pipeline lists the number of processed/outstanding records in each stage of the pipeline.  This can be run from the console, or via a script ("von_pipeline/display_pipeline_status.py").
 
-The "initialization and load tasks" consists of several tasks that are run only once, and correspond to the following scripts:
+The "initialization and load tasks" consists of several tasks that are run only once, and correspond to the sequential execution of the following scripts:
 
-![Event Processor Dashboard](https://raw.githubusercontent.com/bcgov/von-bc-registries-agent/master/data-pipeline/docs/bc_registries_dashboard_init.png "Event Processor Dashboard")
-
-* "bc reg db init" - bcreg/bc_reg_migrate.py
-* "bc reg corp loader" - bcreg/bc_reg_pipeline_initial_load.py
-* "bc reg credential poster" - bcreg/bc_reg_pipeline_post_credentials.py
+* bcreg/create.py
+* bcreg/insert.py
 
 Pipelines under "test and demo tasks" are for test and demonstration purposes only.
 
@@ -66,8 +63,8 @@ Note that these scripts depend on the database running under docker, based on th
 Use the fifth command shell (or open another - why not?) to run the script(s), for example:
 
 ```
-cd mara-example-project/scripts
-BC_REG_DB_USER=<usr> BC_REG_DB_PASSWORD=<pwd> MARA_DB_HOST=localhost MARA_DB_PORT=5444 ./run-step.sh bcreg/<script>.py
+cd eao-pipeline/scripts
+EAO_MDB_USER=<usr> EAO_MDB_PASSWORD=<pwd> MARA_DB_HOST=localhost MARA_DB_PORT=5444 ./run-step.sh von_pipeline/<script>.py
 ```
 
 The logs and run stats can be viewed in the UI.
@@ -76,29 +73,34 @@ NOTE: When you run the pipeline using the user interface, it uses a copy of the 
 
 ## Running Pipelines to Perform Initialization and Data Load
 
-The following will perform database initialization and do the initial corporation data load:
+The following will perform database initialization:
 
 ```
-cd mara-example-project/scripts
+cd eao-pipeline/scripts
 
-BC_REG_DB_USER=<usr> BC_REG_DB_PASSWORD=<pwd> MARA_DB_HOST=localhost MARA_DB_PORT=5444 ./run-step.sh bcreg/bc_reg_migrate.py
-
-BC_REG_DB_USER=<usr> BC_REG_DB_PASSWORD=<pwd> MARA_DB_HOST=localhost MARA_DB_PORT=5444 ./run-step.sh bcreg/bc_reg_pipeline_initial_load.py
+EAO_MDB_USER=<usr> EAO_MDB_PASSWORD=<pwd> EAO_MDB_PORT=<port> EAO_MDB_DATABASE=<database> MARA_DB_HOST=localhost MARA_DB_PORT=5444 ./run-step.sh von_pipeline/von_data_pipeline_initial_load.py
 ```
 
-The initial load will load over 930,000 corporations and process almost 2 million credentials.  It will run for almost 12 hours.  
 
-The following can be run at the same time (in a separate console window) to post credentials to TOB (wait for ~15-20 minutes to allow the initial load to start populating the outbound credential queue):
+The following script will fetch the new data and prepare the credentials for submission:
 
 ```
-cd mara-example-project/scripts
+cd eao-pipeline/scripts
 
-BC_REG_DB_USER=<usr> BC_REG_DB_PASSWORD=<pwd> MARA_DB_HOST=localhost MARA_DB_PORT=5444 ./run-step.sh bcreg/bc_reg_pipeline_post_credentials.py
+EAO_MDB_USER=<usr> EAO_MDB_PASSWORD=<pwd> MARA_DB_HOST=localhost MARA_DB_PORT=5444 ./run-step.sh von_pipeline/generate-creds.py
+```
+
+The following script will submit the credentials that were prepared in the previous step to `eao-agent`:
+
+```
+cd eao-pipeline/scripts
+
+EAO_MDB_USER=<usr> EAO_MDB_PASSWORD=<pwd> EAO_MDB_PORT=<port> EAO_MDB_DATABASE=<database> MARA_DB_HOST=localhost MARA_DB_PORT=5444 VONX_API_URL=http://localhost:5001/eao-evidence-locker ./run-step.sh von_pipeline/submit-creds.py
 ```
 
 ## Performing an Initial Data Load in OpenShift
 
-*The following configuration was found to provide the highest sustained throughput for posting credentials.*  *The eao-agent and mara pods have to be manually scaled because they do not have any resource limits set on which a horizontal autoscaler could operate.  The `tob-api` pods are configured with a horizontal autoscaler.*
+*The following configuration was found to provide the highest sustained throughput for posting credentials.*  *The eao-agent and mara pods have to be manually scaled because they do not have any resource limits set on which a horizontal autoscaler could operate.  The `tob-api` (django) pods are configured with a horizontal autoscaler.*
 
 Scale the eao-agent deployment to 8 to 10 pods and make sure they have fully started.  When feeding into 5 `tob-api` pods, these 8 to 10 agent pods can provide a throughput of a little over 2,600 credentials per minute at best.  Increasing the number of pods on either side has little to no additional performance benefit.
 
@@ -109,8 +111,7 @@ Use `oc rsh` to open a terminal session with each of the mara containers.
 In one container run the following scripts to start the credential staging process;
 ```
 cd scripts
-./run-step.sh bcreg/bc_reg_migrate.py
-./run-step.sh bcreg/bc_reg_pipeline_initial_load.py
+./run-step.sh von_pipeline/generate-creds.py
 ```
 
 Allow the credential staging process to run for a while to allow it to get a head start on the credential posting process.  Posting is faster than staging, at the moment, so if you don't allow staging to get a head start the posting process will run out of work and end.
@@ -118,7 +119,7 @@ Allow the credential staging process to run for a while to allow it to get a hea
 In the second mara container start the credential posting process;
 ```
 cd scripts
-./run-step.sh bcreg/bc_reg_pipeline_post_credentials.py
+./run-step.sh von_pipeline/submit-creds.py
 ```
 Once the initial load is complete the deployments can be scaled back to single pods.
 
@@ -127,23 +128,23 @@ Once the initial load is complete the deployments can be scaled back to single p
 The following should be run at regular intervals (e.g. 15 minutes) on a scheduler:
 
 ```
-cd mara-example-project/scripts
+cd eao-pipeline/scripts
 
-BC_REG_DB_USER=<user> BC_REG_DB_PASSWORD=<pwd> MARA_DB_HOST=localhost MARA_DB_PORT=5444 ./run-step.sh bcreg/bc_reg_pipeline.py
+EAO_MDB_USER=<user> EAO_MDB_PASSWORD=<pwd> EAO_MDB_PORT=<port> EAO_MDB_DATABASE=<database> MARA_DB_HOST=localhost MARA_DB_PORT=5444 ./run-step.sh von_pipeline/von_data_pipeline.py
 ```
 
-Hint:  If you want to test out the "bc_reg_pipeline.py" script, run the following sub-task under "test and demo tasks" in the Mara console first:
+Hint:  If you want to test out the "von_data_pipeline.py" script, run the following sub-task under "test and demo tasks" in the Mara console first:
 
-* "bc reg test data"
+* "von data event processor"
 
 ## Extending Event Processor
 
 The mara setup itself is generic, as long as you run from the provided docker scripts.
 
-There is a single dependency in the following script that references the BC Reg pipelines:
+There is a single dependency in the following script that references the VON data pipelines:
 
 * data-pipeline/app/data_integration/__init__.py
 
 This script initializes the pipelines that are displayed in the UI, so must be customized to include any necessary pipelines.
 
-The BC Registries specific code is all in the data-pipeline/bcreg directory.  Since the pipelines are setup to run Python commands from the command line, there are no code dependencies between the two projects (other than dependencies on the data_integration framework itself).
+Since the pipelines are setup to run Python commands from the command line, there are no code dependencies between the two projects (other than dependencies on the data_integration framework itself).
