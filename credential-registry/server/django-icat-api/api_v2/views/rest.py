@@ -5,7 +5,7 @@ from django.http import HttpResponse, Http404
 from django.shortcuts import get_object_or_404
 
 from rest_framework.exceptions import NotFound
-from rest_framework.decorators import detail_route, list_route
+from rest_framework.decorators import action
 from rest_framework.viewsets import ReadOnlyModelViewSet, ViewSet
 from rest_framework.response import Response
 
@@ -48,7 +48,7 @@ class IssuerViewSet(ReadOnlyModelViewSet):
     queryset = Issuer.objects.all()
 
     @swagger_auto_schema(method='get')
-    @detail_route(url_path="credentialtype", methods=["get"])
+    @action(detail=True, url_path="credentialtype", methods=["get"])
     def list_credential_types(self, request, pk=None):
         item = self.get_object()
         queryset = item.credential_types
@@ -56,7 +56,7 @@ class IssuerViewSet(ReadOnlyModelViewSet):
         return Response(serializer.data)
 
     @swagger_auto_schema(method='get')
-    @detail_route(url_path="logo", methods=["get"])
+    @action(detail=True, url_path="logo", methods=["get"])
     def fetch_logo(self, request, pk=None):
         issuer = get_object_or_404(self.queryset, pk=pk)
         logo = None
@@ -79,7 +79,7 @@ class CredentialTypeViewSet(ReadOnlyModelViewSet):
     serializer_class = CredentialTypeSerializer
     queryset = CredentialType.objects.all()
 
-    @detail_route(url_path="logo", methods=["get"])
+    @action(detail=True, url_path="logo", methods=["get"])
     def fetch_logo(self, request, pk=None):
         cred_type = get_object_or_404(self.queryset, pk=pk)
         logo = None
@@ -92,7 +92,7 @@ class CredentialTypeViewSet(ReadOnlyModelViewSet):
         # FIXME - need to store the logo mime type
         return HttpResponse(logo, content_type="image/jpg")
 
-    @detail_route(url_path="language", methods=["get"])
+    @action(detail=True, url_path="language", methods=["get"])
     def fetch_language(self, request, pk=None):
         cred_type = get_object_or_404(self.queryset, pk=pk)
         lang = {
@@ -107,47 +107,47 @@ class TopicViewSet(ReadOnlyModelViewSet):
     serializer_class = TopicSerializer
     queryset = Topic.objects.all()
 
-    @detail_route(url_path="formatted", methods=["get"])
+    @action(detail=True, url_path="formatted", methods=["get"])
     def retrieve_formatted(self, request, pk=None):
         item = self.get_object()
         serializer = CustomTopicSerializer(item)
         return Response(serializer.data)
 
-    @detail_route(url_path="credential", methods=["get"])
+    @action(detail=True, url_path="credential", methods=["get"])
     def list_credentials(self, request, pk=None):
         item = self.get_object()
         queryset = item.credentials
         serializer = ExpandedCredentialSerializer(queryset, many=True)
         return Response(serializer.data)
 
-    @detail_route(url_path="credential/active", methods=["get"])
+    @action(detail=True, url_path="credential/active", methods=["get"])
     def list_active_credentials(self, request, pk=None):
         item = self.get_object()
         queryset = item.credentials.filter(revoked=False, inactive=False)
         serializer = ExpandedCredentialSerializer(queryset, many=True)
         return Response(serializer.data)
 
-    @detail_route(url_path="credential/historical", methods=["get"])
+    @action(detail=True, url_path="credential/historical", methods=["get"])
     def list_historical_credentials(self, request, pk=None):
         item = self.get_object()
         queryset = item.credentials.filter(Q(revoked=True) | Q(inactive=True))
         serializer = ExpandedCredentialSerializer(queryset, many=True)
         return Response(serializer.data)
 
-    @list_route(
-        methods=["get"], url_path="ident/(?P<type>[^/.]+)/(?P<source_id>[^/.]+)"
+    @action(
+        detail=False, methods=["get"], url_path="ident/(?P<type>[^/.]+)/(?P<source_id>[^/.]+)"
     )
     def retrieve_by_type(self, request, type=None, source_id=None):
         return self.retrieve(request)
 
-    @list_route(
-        methods=["get"],
+    @action(
+        detail=False, methods=["get"],
         url_path="ident/(?P<type>[^/.]+)/(?P<source_id>[^/.]+)/formatted",
     )
     def retrieve_by_type_formatted(self, request, type=None, source_id=None):
         return self.retrieve_formatted(request)
 
-    @detail_route(url_path="credentialset", methods=["get"])
+    @action(detail=True, url_path="credentialset", methods=["get"])
     def list_credential_sets(self, request, pk=None):
         item = self.get_object()
         queryset = item.credential_sets.order_by("first_effective_date").all()
@@ -175,25 +175,25 @@ class CredentialViewSet(ReadOnlyModelViewSet):
     serializer_class = CredentialSerializer
     queryset = Credential.objects.all()
 
-    @detail_route(url_path="formatted", methods=["get"])
+    @action(detail=True, url_path="formatted", methods=["get"])
     def retrieve_formatted(self, request, pk=None):
         item = self.get_object()
         serializer = ExpandedCredentialSerializer(item)
         return Response(serializer.data)
 
-    @list_route(url_path="active", methods=["get"])
+    @action(detail=False, url_path="active", methods=["get"])
     def list_active(self, request, pk=None):
         queryset = self.queryset.filter(revoked=False, inactive=False, latest=True)
         serializer = CredentialSerializer(queryset, many=True)
         return Response(serializer.data)
 
-    @list_route(url_path="historical", methods=["get"])
+    @action(detail=False, url_path="historical", methods=["get"])
     def list_historical(self, request, pk=None):
         queryset = self.queryset.filter(Q(revoked=True) | Q(inactive=True))
         serializer = CredentialSerializer(queryset, many=True)
         return Response(serializer.data)
 
-    @detail_route(url_path="latest", methods=["get"])
+    @action(detail=True, url_path="latest", methods=["get"])
     def get_latest(self, request, pk=None):
         item = self.get_object()
         latest = None

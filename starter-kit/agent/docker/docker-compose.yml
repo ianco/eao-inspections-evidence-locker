@@ -92,12 +92,13 @@ services:
       - EVENT_PROC_DB_PORT=${EVENT_PROC_DB_PORT:-5432}
       - EVENT_PROC_DB_DATABASE=${EVENT_PROC_DB_DATABASE:-eao_locker_db}
       - EVENT_PROC_DB_USER=${EVENT_PROC_DB_USER:-eao_locker_db}
-      - EVENT_PROC_DB_PASSWORD=
+      - EVENT_PROC_DB_PASSWORD=${EVENT_PROC_DB_PASSWORD:-eao_locker_db_pwd}
       # [mara_db]
       - MARA_DB_HOST=${MARA_DB_HOST:-von-pipeline-db}
       - MARA_DB_PORT=${MARA_DB_PORT:-5432}
       - MARA_DB_DATABASE=${MARA_DB_DATABASE:-mara_db}
       - MARA_DB_USER=${MARA_DB_USER:-mara_db}
+      - MARA_DB_PASSWORD=${MARA_DB_PASSWORD:-mara_db_pwd}
     networks:
       - evlockr
     ports:
@@ -116,9 +117,9 @@ services:
       context: ../eao-pipeline
       dockerfile: docker/postgres/Dockerfile
     environment:
-      - POSTGRESQL_USER=${POSTGRESQL_USER}
-      - POSTGRESQL_PASSWORD=${POSTGRESQL_PASSWORD}
-      - POSTGRESQL_DATABASE=${POSTGRESQL_DATABASE}
+      - POSTGRES_USER=${POSTGRESQL_USER}
+      - POSTGRES_PASSWORD=${POSTGRESQL_PASSWORD}
+      - POSTGRES_DATABASE=${POSTGRESQL_DATABASE}
     networks:
       - evlockr
     ports:

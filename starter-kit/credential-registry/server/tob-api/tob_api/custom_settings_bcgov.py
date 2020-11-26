@@ -2,12 +2,12 @@
 Enclose property names in double quotes in order to JSON serialize the contents in the API
 """
 import logging
-from rest_framework.decorators import detail_route
+from rest_framework.decorators import action
 
 LOGGER = logging.getLogger(__name__)
 
 
-@detail_route(url_path="related_to")
+@action(detail=True, url_path="related_to")
 def list_related_to(self, request, pk=None):
     # We load most at runtime because ORM isn't loaded at setup time
     from django.shortcuts import get_object_or_404
@@ -23,7 +23,7 @@ def list_related_to(self, request, pk=None):
     return Response(serializer.data)
 
 
-@detail_route(url_path="related_from")
+@action(detail=True, url_path="related_from")
 def list_related_from(self, request, pk=None):
     # Secondary imports do not incur a cost
     from django.shortcuts import get_object_or_404

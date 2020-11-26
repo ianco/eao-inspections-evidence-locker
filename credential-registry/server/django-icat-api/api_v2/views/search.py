@@ -2,7 +2,7 @@ import logging
 
 from django.http import Http404
 from rest_framework import permissions
-from rest_framework.decorators import list_route
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from drf_haystack.filters import (
@@ -218,7 +218,7 @@ class CredentialSearchView(HaystackViewSet, FacetMixin):
     ordering = ('-score')
 
     # FacetMixin provides /facets
-    @list_route(methods=["get"], url_path="facets")
+    @action(detail=False, methods=["get"], url_path="facets")
     def facets(self, request):
         """
         We want facet_counts from the less-restricted queryset
